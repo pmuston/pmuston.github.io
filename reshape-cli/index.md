@@ -9,6 +9,8 @@ filter: read one format, write another, stdin to stdout by default.
 
 ## Install
 
+### Homebrew (macOS & Linux)
+
 ```sh
 brew tap pmuston/reshape
 brew trust pmuston/reshape   # required for third-party taps
@@ -19,7 +21,17 @@ brew install reshape-cli
 > unrelated `reshape` (a Postgres migration tool), so this one takes the `-cli`
 > suffix to keep the install name unambiguous.
 
-After installing, `man reshape-cli` has the full reference offline.
+### Linux / no package manager
+
+```sh
+curl -fsSL https://pmuston.github.io/install.sh | sh -s reshape-cli
+```
+
+Installs the binary to `~/.local/bin` and the man page alongside it — no root,
+no package manager. Re-run to upgrade. Pin a version with `VERSION=v0.1.2`, or
+change the location with `BIN_DIR=/usr/local/bin` (needs write access).
+
+After installing either way, `man reshape-cli` has the full reference offline.
 
 ## Usage
 
