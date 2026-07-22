@@ -2,8 +2,25 @@
 title: Command-line tools
 ---
 
-Small, focused Unix utilities. Each one does a single job well and installs via
-[Homebrew](https://brew.sh).
+Small, focused command-line tools. Each one does a single job well and installs
+via [Homebrew](https://brew.sh).
+
+## clinote
+
+A personal lab notebook for shell commands, in your browser. One Markdown file
+is one notebook; a persistent shell runs the cells and outputs are spliced back
+into the same `.md` — plain CommonMark, readable and correct on GitHub.
+
+```sh
+brew tap pmuston/tap
+brew trust pmuston/tap
+brew install pmuston/tap/clinote
+```
+
+[Documentation →](clinote/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/clinote)
+
+---
 
 ## cyq
 
