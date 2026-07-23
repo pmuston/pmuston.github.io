@@ -84,7 +84,7 @@ echo "MATCH (n) RETURN n LIMIT 100" | cyq --bom -o out.csv
 | `1` | Usage/input error (bad flags, exclusive combo, empty query, missing password, malformed params JSON). |
 | `2` | Cypher syntax or other client error from the database. |
 | `3` | Driver, connection, or authentication failure. |
-| `4` | The query exceeded `--timeout`. |
+| `4` | The `--timeout` deadline ended the attempt — a query that ran too long, or a host that never answered. A connection that actively fails (refused, reset) is `3`. |
 | `5` | I/O error reading input or writing output. |
 
 ## Links
