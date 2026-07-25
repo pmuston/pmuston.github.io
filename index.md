@@ -39,6 +39,23 @@ brew install cyq
 
 ---
 
+## graphdb
+
+An **in-memory graph database** with SQLite write-through persistence, serving a
+subset of openCypher over HTTP/JSON. The whole graph lives in RAM and reads never
+touch disk; SQLite is the durable store, written through on every mutation.
+
+```sh
+brew tap pmuston/graphdb
+brew trust pmuston/graphdb
+brew install graphdb
+```
+
+[Documentation →](graphdb/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-graphdb)
+
+---
+
 ## reshape-cli
 
 Convert tabular records between **JSON**, **JSONL**, and **CSV** — a Unix filter
