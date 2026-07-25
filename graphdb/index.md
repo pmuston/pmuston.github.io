@@ -30,7 +30,9 @@ no package manager. The download is checksum-verified against the release.
 Re-run to upgrade. Pin a version with `VERSION=v0.23.0`, or change the location
 with `BIN_DIR=/usr/local/bin` (needs write access).
 
-After installing either way, `man graphdb` has the full reference offline.
+After installing either way, `man graphdb` has the full reference offline, and
+the [user guide](guide/) is the example-driven tour of the query language and
+the HTTP API.
 
 ## Usage
 

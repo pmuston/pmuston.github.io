@@ -52,6 +52,7 @@ brew install graphdb
 ```
 
 [Documentation →](graphdb/) &nbsp;·&nbsp;
+[User guide →](graphdb/guide/) &nbsp;·&nbsp;
 [Source & releases](https://github.com/pmuston/homebrew-graphdb)
 
 ---
