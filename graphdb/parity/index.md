@@ -15,7 +15,8 @@ prioritise the gaps.
 See also [cypher-spec.md](../cypher/), the normative language reference for
 graphdb's dialect.
 
-**graphdb server version at last review:** 0.24.0
+**graphdb server version at last review:** 0.24.0 — every ✅ and ❌ row below was
+executed against a running server of that version, not inferred from the source.
 **Neo4j reference:** 5.x
 
 ## Legend
@@ -120,7 +121,7 @@ properties**. graphdb's stored-property set is a subset of Neo4j's.
 | Boolean | ✅ | |
 | String | ✅ | UTF-8; string functions are rune-aware. |
 | Null | ✅ | Setting a property to null removes it. |
-| List | ⚠️ | Supported (feature `list-properties`), persisted as a JSON array. **More permissive than Neo4j**: graphdb allows heterogeneous and **nested** lists; Neo4j requires a homogeneous array of a single primitive. Not indexable. |
+| List | ⚠️ | Supported (feature `list-properties`), persisted as a JSON array. **More permissive than Neo4j**: graphdb allows heterogeneous and **nested** lists; Neo4j requires a homogeneous array of a single primitive. **Never indexed** — `POST /indexes` on a list-valued property is accepted but has no effect, so equality and range predicates over it fall back to a scan. |
 | Point (spatial) | ❌ | |
 | Date / Time / LocalTime / DateTime / LocalDateTime | ❌ | |
 | Duration | ❌ | |
@@ -258,6 +259,10 @@ access, map projection, `properties()` (`map-values`).*
 
 ---
 
-*Maintenance: re-derive the graphdb columns from source when the Cypher surface
-changes (lexer keywords, `exec` function dispatch, `plan` aggregate set, model
-property kinds), and bump the "server version at last review" line.*
+*Maintenance: the "server version at last review" line claims the matrix was
+checked, so do not bump it on its own — that turns the stamp into a false
+assertion, which is worse than an obviously stale one. Re-derive the graphdb
+columns when the Cypher surface changes (lexer keywords, `exec` function
+dispatch, `plan` aggregate set, model property kinds), then confirm the ❌ rows
+by executing them: a ❌ that has quietly started working understates the product
+and is the failure mode nobody notices.*
