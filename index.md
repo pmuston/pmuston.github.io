@@ -59,6 +59,24 @@ brew install graphdb
 
 ---
 
+## gq
+
+The graphdb-backed peer of **cyq**: run a single Cypher statement against a
+[graphdb](https://github.com/pmuston/homebrew-graphdb) server and stream the
+result as **CSV** or **JSON Lines**. Same flags as cyq, HTTP + bearer token
+instead of Bolt + password.
+
+```sh
+brew tap pmuston/gq
+brew trust pmuston/gq
+brew install gq
+```
+
+[Documentation →](gq/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-gq)
+
+---
+
 ## reshape-cli
 
 Convert tabular records between **JSON**, **JSONL**, and **CSV** — a Unix filter
