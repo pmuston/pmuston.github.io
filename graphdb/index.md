@@ -11,13 +11,26 @@ never touch disk.
 
 ## Install
 
+### Homebrew (macOS & Linux)
+
 ```sh
 brew tap pmuston/graphdb
 brew trust pmuston/graphdb   # required for third-party taps
 brew install graphdb
 ```
 
-After installing, `man graphdb` has the full reference offline.
+### Linux / no package manager
+
+```sh
+curl -fsSL https://pmuston.github.io/install.sh | sh -s graphdb
+```
+
+Installs the binary to `~/.local/bin` and the man page alongside it — no root,
+no package manager. The download is checksum-verified against the release.
+Re-run to upgrade. Pin a version with `VERSION=v0.23.0`, or change the location
+with `BIN_DIR=/usr/local/bin` (needs write access).
+
+After installing either way, `man graphdb` has the full reference offline.
 
 ## Usage
 
