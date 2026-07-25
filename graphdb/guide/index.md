@@ -6,18 +6,18 @@ title: graphdb User Guide
 
 # User Guide
 
-**Applies to graphdb 0.23.0.** Every example below was executed against a running
-server of that version, not written from memory.
+**Applies to graphdb 0.24.0.** Every example below is executed against a real
+server by the test suite (`TestUserGuideExamples`), so they are checked on every
+change rather than verified once.
 
 A practical, example-driven guide to running graphdb and querying it with the
-Cypher subset. This guide is the tutorial; `man graphdb` is the offline CLI
-reference. The repository additionally carries the normative language
-specification, the client interface contract, the Neo4j parity matrix and
-measured benchmarks.
+Cypher subset. This guide is the tutorial; [cypher-spec.md](../cypher/) is
+the normative language reference, [neo4j-parity.md](../parity/) is the
+comparison matrix against Neo4j, and `man graphdb` is the offline CLI reference.
 
 > Check what you are actually talking to: `curl -s localhost:8080/ | jq .version`
 > reports the server's version and a `features` list. This guide describes
-> 0.23.0; an older instance will reject some of what follows.
+> 0.24.0; an older instance will reject some of what follows.
 
 - [Install and run](#install-and-run)
 - [Configuration](#configuration)

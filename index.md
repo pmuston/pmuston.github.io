@@ -53,6 +53,8 @@ brew install graphdb
 
 [Documentation →](graphdb/) &nbsp;·&nbsp;
 [User guide →](graphdb/guide/) &nbsp;·&nbsp;
+[Cypher reference →](graphdb/cypher/) &nbsp;·&nbsp;
+[Neo4j parity →](graphdb/parity/) &nbsp;·&nbsp;
 [Source & releases](https://github.com/pmuston/homebrew-graphdb)
 
 ---
