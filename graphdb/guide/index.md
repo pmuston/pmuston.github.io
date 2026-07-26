@@ -6,7 +6,7 @@ title: graphdb User Guide
 
 # User Guide
 
-**Applies to graphdb 0.24.0.** Every example below is executed against a real
+**Applies to graphdb 0.25.0.** Every example below is executed against a real
 server by the test suite (`TestUserGuideExamples`), so they are checked on every
 change rather than verified once.
 
@@ -17,7 +17,7 @@ comparison matrix against Neo4j, and `man graphdb` is the offline CLI reference.
 
 > Check what you are actually talking to: `curl -s localhost:8080/ | jq .version`
 > reports the server's version and a `features` list. This guide describes
-> 0.24.0; an older instance will reject some of what follows.
+> 0.25.0; an older instance will reject some of what follows.
 
 - [Install and run](#install-and-run)
 - [Configuration](#configuration)
@@ -604,8 +604,9 @@ queries (e.g. a `Tag` or `Name` used to look up a specific entity).
 
 ## Importing .cypher files
 
-`graphdb import` bulk-loads directories of exporter-generated `.cypher` files —
-one statement per file, one atomic transaction per file.
+`graphdb import` bulk-loads directories of exporter-generated `.cypher` files. A
+file may hold one statement or many, separated by `;`; each statement is one
+atomic transaction.
 
 ```bash
 # 1) Validate first: parse every file, write nothing, list what won't load
@@ -622,11 +623,19 @@ Flags: `--db`, `--server`, `--dry-run`, `--reset`, `--fail-fast`. The run
 continues past errors by default and prints a summary:
 
 ```
-imported 2617 file(s): 177013 nodes, 174396 relationships created; 9 failed (6.39s)
+imported 2617 file(s), 2617 statement(s): 177013 nodes, 174396 relationships created; 9 failed (6.39s)
 ```
 
 Notes:
 - Property keys that are reserved words (e.g. `Set`) are accepted.
+- A statement that fails abandons the rest of *its* file — later statements in a
+  seed file usually depend on earlier ones — while other files still run.
+  `--fail-fast` stops the whole run instead. Neither rolls back what already
+  committed.
+- The `;` split is made on tokens, so a `;` inside a string literal or a
+  backtick-quoted identifier is left alone.
+- `/cypher` still takes exactly one statement per request; splitting a file is a
+  feature of the importer, not of the HTTP API.
 - These exports are **not idempotent** (`CREATE` duplicates on re-run) — use
   `--reset`, or start from an empty database, when re-importing.
 - Don't run an in-process import against a database a live server also has open;

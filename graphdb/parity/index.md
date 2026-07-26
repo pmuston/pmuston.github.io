@@ -32,6 +32,18 @@ graphdb is **not** Neo4j and never runs Bolt; it implements a read-heavy Cypher
 subset over HTTP/JSON. "Parity" here means *source-compatibility of queries*, not
 protocol or storage compatibility.
 
+**Tooling parity.** The practical payoff of this source-compatibility is that
+`graphdb + gq` is a drop-in analogue of `neo4j + cyq` for exporting query
+results. [gq](https://pmuston.github.io/gq) is the graphdb-backed peer of
+[cyq](https://pmuston.github.io/cyq): the same flag surface and output shaping
+(CSV, or graph-row JSONL for `gfig map`), differing only at the connection layer
+— gq speaks this HTTP/JSON API with a bearer token, where cyq speaks Bolt with a
+user and password. An export query ports between the two pairs by changing the
+binary name and the connection flags; the Cypher itself carries over wherever
+the rows below are ✅. gq requires graphdb 0.18.0+ and feature-detects on
+connect. The `varlen-path-binding` and `quoted-identifiers` rows here both began
+as gq requirements.
+
 ---
 
 ## 1. Keywords & clauses
