@@ -77,6 +77,22 @@ brew install gq
 
 ---
 
+## json_query
+
+Query JSON files using a native **dot-path syntax** or **SQL SELECT** statements
+— a scriptable extract, one query per invocation, output as **CSV** or **JSONL**.
+
+```sh
+brew tap pmuston/json_query
+brew install json_query
+```
+
+[Documentation →](json_query/) &nbsp;·&nbsp;
+[User guide →](json_query/guide/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-json_query)
+
+---
+
 ## reshape-cli
 
 Convert tabular records between **JSON**, **JSONL**, and **CSV** — a Unix filter
