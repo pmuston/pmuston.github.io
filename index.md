@@ -93,6 +93,26 @@ brew install json_query
 
 ---
 
+## rednote
+
+A **Redis notebook** in your browser. One Markdown file is one notebook; a
+persistent connection is bound to it, so `SELECT`, `MULTI` and `WATCH` flow from
+cell to cell. Replies are spliced back into the same `.md`, formatted the way
+`redis-cli` prints them — so `(nil)` stays distinguishable from `""` and a value
+holding arbitrary bytes survives exactly.
+
+```sh
+brew tap pmuston/rednote
+brew trust pmuston/rednote
+brew install rednote
+```
+
+[Documentation →](rednote/) &nbsp;·&nbsp;
+[Five-minute demo →](rednote/demo/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-rednote)
+
+---
+
 ## reshape-cli
 
 Convert tabular records between **JSON**, **JSONL**, and **CSV** — a Unix filter
