@@ -131,3 +131,22 @@ brew install reshape-cli
 
 <sub>Each tool ships a man page (`man <tool>`) and a `--help` that links back
 here.</sub>
+
+---
+
+## rt-interest
+
+Subscribe to a NATS subject tree and watch the current value of a curated list
+of tags in a browser, live. A diagnostic tool: it answers *is this arriving?*
+rather than *what is the value?*, so a tag never seen, one last seen three hours
+ago, and one seen 200ms ago all look different.
+
+```sh
+brew tap pmuston/rt-interest
+brew trust pmuston/rt-interest
+brew install rt-interest
+```
+
+[Documentation →](rt-interest/) &nbsp;·&nbsp;
+[User guide →](rt-interest/guide/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-rt-interest)
