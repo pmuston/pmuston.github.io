@@ -22,6 +22,25 @@ brew install pmuston/tap/clinote
 
 ---
 
+## csvpub
+
+Replay a timestamped CSV onto **NATS** or **MQTT** on a scaled-time schedule, one
+topic per column. Turns a historian export or logger dump back into the live
+stream it came from, so a dashboard, a balance calculation or an alarm rule can
+be driven from an archive.
+
+```sh
+brew tap pmuston/csvpub
+brew trust pmuston/csvpub
+brew install csvpub
+```
+
+[Documentation →](csvpub/) &nbsp;·&nbsp;
+[User guide →](csvpub/guide/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-csvpub)
+
+---
+
 ## cyq
 
 Run a single **read-only** Cypher query against Neo4j and stream the result as
