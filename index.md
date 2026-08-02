@@ -169,11 +169,6 @@ brew install reshape-cli
 
 ---
 
-<sub>Each tool ships a man page (`man <tool>`) and a `--help` that links back
-here.</sub>
-
----
-
 ## rt-interest
 
 Subscribe to a NATS subject tree and watch the current value of a curated list
@@ -190,3 +185,8 @@ brew install rt-interest
 [Documentation →](rt-interest/) &nbsp;·&nbsp;
 [User guide →](rt-interest/guide/) &nbsp;·&nbsp;
 [Source & releases](https://github.com/pmuston/homebrew-rt-interest)
+
+---
+
+<sub>Each tool ships a man page (`man <tool>`) and a `--help` that links back
+here.</sub>
