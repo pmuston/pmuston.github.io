@@ -108,19 +108,32 @@ network.
 intended connect check — it reports the API version, the build and the commit.
 Branch on `apiVersion`, not the release number; the two move independently.
 
-## Writing a client
+## Drivers
 
-Go programs use **[jsondb-go](https://github.com/pmuston/jsondb-go)**, the
-driver — public, standard-library only, and mirroring the library's API so a
-remote program gets the same surface as an embedder:
+Both are public, depend on nothing outside their standard library, and cover
+the same 21 collection methods.
+
+**Go** — [jsondb-go](https://github.com/pmuston/jsondb-go), which mirrors the
+library's API so a remote program gets the same surface as an embedder:
 
 ```go
 c, err := jsondb.Connect(ctx, "jsondb://localhost:8080")
 docs, err := c.Collection("users").Find(ctx, jsondb.Filter{"tier": "gold"})
 ```
 
-For any other language, the [wire protocol](wire-protocol/) is the specification
-and [`openapi.yaml`](openapi.yaml) the machine-readable shapes.
+**Python** — [jsondb-client](https://github.com/pmuston/jsondb-client), shaped
+like pymongo rather than transliterated from the Go one:
+
+```python
+with jsondb_client.connect("jsondb://localhost:8080") as db:
+    for user in db["users"].find({"tier": "gold"}).sort("-age").limit(10):
+        print(user["name"])
+```
+
+For any other language, the [wire protocol](wire-protocol/) is the
+specification, [`openapi.yaml`](openapi.yaml) the machine-readable shapes, and
+[`surface.json`](surface.json) the method set to cover — vendor it and let your
+own test suite fail when it grows.
 
 ## Exit status
 

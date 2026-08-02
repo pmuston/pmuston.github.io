@@ -125,6 +125,9 @@ brew trust pmuston/jsondb
 brew install jsondb
 ```
 
+Drivers: [Go](https://github.com/pmuston/jsondb-go) ·
+[Python](https://github.com/pmuston/jsondb-client) (`pip install jsondb-client`)
+
 [Documentation →](jsondb/) &nbsp;·&nbsp;
 [User guide →](jsondb/guide/) &nbsp;·&nbsp;
 [Wire protocol →](jsondb/wire-protocol/) &nbsp;·&nbsp;
