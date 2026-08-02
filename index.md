@@ -112,6 +112,27 @@ brew install json_query
 
 ---
 
+## jsondb
+
+A **MongoDB-lite JSON document store** on SQLite. Schema-on-read documents,
+Mongo-shaped filters and update operators, real indexes with implicit array
+matching — a single static binary with no CGo. Embed it as a Go library, or run
+it as an HTTP server with a browser admin UI.
+
+```sh
+brew tap pmuston/jsondb
+brew trust pmuston/jsondb
+brew install jsondb
+```
+
+[Documentation →](jsondb/) &nbsp;·&nbsp;
+[User guide →](jsondb/guide/) &nbsp;·&nbsp;
+[Wire protocol →](jsondb/wire-protocol/) &nbsp;·&nbsp;
+[Query syntax →](jsondb/native-query/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-jsondb)
+
+---
+
 ## rednote
 
 A **Redis notebook** in your browser. One Markdown file is one notebook; a

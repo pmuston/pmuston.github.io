@@ -1,0 +1,558 @@
+openapi: 3.1.0
+info:
+  title: jsondb HTTP API
+  version: "1"
+  description: |
+    The wire contract for jsondb servers. This file covers request and response
+    *shapes*; the semantics a driver must implement correctly — implicit array
+    matching, matched-versus-modified, upsert seeding, type-conflict errors —
+    are in wire-protocol.md, which this file cannot express.
+
+    There is no authentication. Everything here is available to anyone who can
+    reach the port.
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Default local server
+
+tags:
+  - name: documents
+  - name: writes
+  - name: indexes
+  - name: collections
+  - name: server
+
+paths:
+  /_version:
+    get:
+      tags: [server]
+      summary: Server and API version
+      description: |
+        The intended connect check: cheapest endpoint, and it proves the server
+        speaks a contract the client understands.
+      responses:
+        "200":
+          description: Version information
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VersionInfo" }
+
+  /collections:
+    get:
+      tags: [collections]
+      summary: List collections with document counts
+      responses:
+        "200":
+          description: Collections
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CollectionInfo" }
+
+  /{coll}:
+    parameters:
+      - $ref: "#/components/parameters/Coll"
+    get:
+      tags: [documents]
+      summary: Find documents
+      parameters:
+        - name: q
+          in: query
+          description: URL-encoded JSON filter.
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: skip
+          in: query
+          description: O(skip); deep paging grows more expensive.
+          schema: { type: integer, minimum: 0 }
+        - name: sort
+          in: query
+          description: '"path" or "path:desc".'
+          schema: { type: string }
+        - name: count
+          in: query
+          description: 'When "true", returns a count object instead of documents.'
+          schema: { type: string, enum: ["true"] }
+      responses:
+        "200":
+          description: Matching documents, or a count
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items: { $ref: "#/components/schemas/Document" }
+                  - type: object
+                    properties:
+                      count: { type: integer, format: int64 }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    post:
+      tags: [documents]
+      summary: Insert one document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Document" }
+      responses:
+        "201":
+          description: Inserted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, description: Generated UUIDv7 }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      tags: [collections]
+      summary: Drop the collection, its documents and its indexes
+      description: |
+        Not an error when the collection holds nothing: a collection is a
+        column value, so "empty" and "does not exist" are the same state.
+      responses:
+        "204": { description: Dropped }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /{coll}/_batch:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [documents]
+      summary: Insert many documents in one transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/Document" }
+      responses:
+        "201":
+          description: Inserted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ids:
+                    type: array
+                    items: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /{coll}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Coll"
+      - $ref: "#/components/parameters/ID"
+    get:
+      tags: [documents]
+      summary: Fetch one document by id
+      responses:
+        "200":
+          description: The document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Document" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [documents]
+      summary: Replace a document by id
+      description: The replacement's _id is ignored; ids are immutable.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Document" }
+      responses:
+        "204": { description: Replaced }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    patch:
+      tags: [documents]
+      summary: Shallow-merge fields into a document (RFC 7396)
+      description: A null value deletes that field. A jsondb extension with no MongoDB equivalent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Document" }
+      responses:
+        "204": { description: Patched }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      tags: [documents]
+      summary: Delete a document by id
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /{coll}/_updateOne:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Apply update operators to at most one match
+      description: |
+        Acts on the match with the lowest _id, so repeated calls are
+        deterministic. See wire-protocol.md for operator semantics and for what
+        upsert seeds the new document from.
+      requestBody: { $ref: "#/components/requestBodies/Update" }
+      responses:
+        "200": { $ref: "#/components/responses/UpdateResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /{coll}/_updateMany:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Apply update operators to every match
+      requestBody: { $ref: "#/components/requestBodies/Update" }
+      responses:
+        "200": { $ref: "#/components/responses/UpdateResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /{coll}/_replaceOne:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Replace one whole matching document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter: { $ref: "#/components/schemas/Filter" }
+                replacement: { $ref: "#/components/schemas/Document" }
+                upsert: { type: boolean }
+      responses:
+        "200": { $ref: "#/components/responses/UpdateResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /{coll}/_deleteOne:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Delete at most one match, the one with the lowest _id
+      requestBody: { $ref: "#/components/requestBodies/FilterOnly" }
+      responses:
+        "200": { $ref: "#/components/responses/DeleteResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /{coll}/_deleteMany:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Delete every match
+      description: An empty filter empties the collection but leaves its indexes in place.
+      requestBody: { $ref: "#/components/requestBodies/FilterOnly" }
+      responses:
+        "200": { $ref: "#/components/responses/DeleteResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /{coll}/_explain:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [writes]
+      summary: Report the plan for the equivalent find, without running it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter: { $ref: "#/components/schemas/Filter" }
+                limit: { type: integer }
+                skip: { type: integer }
+                sort: { type: string }
+      responses:
+        "200":
+          description: The plan, with its reading
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Plan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /{coll}/_indexes:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    get:
+      tags: [indexes]
+      summary: List this collection's indexes
+      responses:
+        "200":
+          description: Indexes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IndexInfo" }
+    post:
+      tags: [indexes]
+      summary: Create an index
+      description: |
+        Idempotent. Unique indexes are sparse by default — documents missing the
+        path never collide. Fails with duplicate_key if existing data already
+        violates uniqueness.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IndexSpec" }
+      responses:
+        "204": { description: Created }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /{coll}/_indexes/{name}:
+    parameters:
+      - $ref: "#/components/parameters/Coll"
+      - name: name
+        in: path
+        required: true
+        schema: { type: string }
+    delete:
+      tags: [indexes]
+      summary: Drop an index by name
+      responses:
+        "204": { description: Dropped }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /{coll}/_stats:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    get:
+      tags: [collections]
+      summary: Document count and stored size
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CollectionStats" }
+
+  /{coll}/_rename:
+    parameters: [{ $ref: "#/components/parameters/Coll" }]
+    post:
+      tags: [collections]
+      summary: Move documents and indexes under a new name
+      description: |
+        Refused with duplicate_key if the target already holds documents, rather
+        than silently merging two collections.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: { type: string, pattern: "^[A-Za-z0-9_-]+$" }
+      responses:
+        "204": { description: Renamed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+components:
+  parameters:
+    Coll:
+      name: coll
+      in: path
+      required: true
+      description: Collection name.
+      schema: { type: string, pattern: "^[A-Za-z0-9_-]+$" }
+    ID:
+      name: id
+      in: path
+      required: true
+      description: Document id (UUIDv7).
+      schema: { type: string }
+
+  requestBodies:
+    Update:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filter: { $ref: "#/components/schemas/Filter" }
+              update: { $ref: "#/components/schemas/UpdateDocument" }
+              upsert: { type: boolean }
+    FilterOnly:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filter: { $ref: "#/components/schemas/Filter" }
+
+  responses:
+    BadRequest:
+      description: Invalid filter, JSON, name or update
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such document, index or route
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Unique index violated
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    UpdateResult:
+      description: |
+        matchedCount and modifiedCount differ: an update writing a document's
+        existing values reports one matched and none modified.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UpdateResult" }
+    DeleteResult:
+      description: Number of documents removed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DeleteResult" }
+
+  schemas:
+    Document:
+      type: object
+      description: |
+        An arbitrary JSON object. The server stamps "_id", a UUIDv7 string, on
+        every write; clients never set it.
+      additionalProperties: true
+
+    Filter:
+      type: object
+      description: |
+        A MongoDB-shaped filter. Opaque on the wire — the server validates it
+        and rejects unknown operators. Note that equality traverses arrays.
+      additionalProperties: true
+
+    UpdateDocument:
+      type: object
+      description: |
+        Operators only; mixing operators with plain fields is rejected. Type
+        conflicts ($inc on a string) are errors, and nothing is written.
+      additionalProperties: true
+
+    UpdateResult:
+      type: object
+      properties:
+        matchedCount: { type: integer, format: int64 }
+        modifiedCount: { type: integer, format: int64 }
+        upsertedId:
+          type: string
+          description: Present only when an upsert created a document.
+
+    DeleteResult:
+      type: object
+      properties:
+        deletedCount: { type: integer, format: int64 }
+
+    IndexSpec:
+      type: object
+      required: [paths]
+      properties:
+        paths:
+          type: array
+          minItems: 1
+          items: { type: string, pattern: "^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$" }
+          description: Compound indexes are led by their first path.
+        unique: { type: boolean }
+        name:
+          type: string
+          pattern: "^[A-Za-z0-9_-]+$"
+          description: Optional; derived when omitted.
+
+    IndexInfo:
+      type: object
+      properties:
+        name: { type: string }
+        collection: { type: string }
+        paths:
+          type: array
+          items: { type: string }
+        unique: { type: boolean }
+
+    CollectionInfo:
+      type: object
+      properties:
+        name: { type: string }
+        count: { type: integer, format: int64 }
+
+    CollectionStats:
+      type: object
+      properties:
+        name: { type: string }
+        count: { type: integer, format: int64 }
+        size:
+          type: integer
+          format: int64
+          description: Total bytes of document bodies, excluding row and index overhead.
+        avgObjSize: { type: integer, format: int64 }
+        numIndexes: { type: integer }
+
+    Plan:
+      type: object
+      description: |
+        seeksIndex and sortsInMemory are computed server-side on purpose: they
+        derive from SQLite's plan wording, an implementation detail that has
+        changed before. Clients must not re-derive them from the step text.
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              parent: { type: integer }
+              detail: { type: string }
+        seeksIndex:
+          type: boolean
+          description: The plan narrows the search rather than examining every document.
+        sortsInMemory:
+          type: boolean
+          description: Results are collected and sorted rather than read in index order.
+
+    VersionInfo:
+      type: object
+      properties:
+        apiVersion:
+          type: integer
+          description: Contract version; matches the /api/v{N}/ prefix.
+        version: { type: string }
+        revision: { type: string }
+        modified: { type: boolean }
+        go: { type: string }
+
+    Error:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+          description: Human-readable; may change between releases.
+        code:
+          type: string
+          description: |
+            Stable identifier a driver maps to its error type. New codes may
+            appear without an API version bump; treat unknown ones as generic.
+          enum:
+            - not_found
+            - invalid_filter
+            - invalid_json
+            - invalid_name
+            - invalid_update
+            - duplicate_key
+            - wrong_api_version
+            - internal
