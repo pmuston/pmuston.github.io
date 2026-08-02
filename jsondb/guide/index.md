@@ -60,6 +60,9 @@ brew trust pmuston/jsondb   # required for third-party taps
 brew install jsondb
 ```
 
+`man jsondb` is the offline reference; <https://pmuston.github.io/jsondb> is the
+same documentation online.
+
 To build from source instead, you need **Go 1.25+** (`go.mod` declares 1.25.4).
 
 ```sh
