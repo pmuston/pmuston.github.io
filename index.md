@@ -96,6 +96,25 @@ brew install gq
 
 ---
 
+## json_find
+
+Find **where** a fragment lives in a JSON corpus — half a key name, a value you
+saw in a log once — and whether it's there at all. Results group by *shape*, so
+repetition collapses into a count, and each one ends in a `json_query` command
+you can paste. Reconnaissance, not extraction.
+
+```sh
+brew tap pmuston/json_find
+brew trust pmuston/json_find
+brew install json_find
+```
+
+[Documentation →](json_find/) &nbsp;·&nbsp;
+[User guide →](json_find/guide/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-json_find)
+
+---
+
 ## json_query
 
 Query JSON files using a native **dot-path syntax** or **SQL SELECT** statements
