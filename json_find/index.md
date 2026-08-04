@@ -102,6 +102,8 @@ is off entirely for patterns of four characters or fewer. Cap the ladder with
 | `--color` | | `auto`, `always`, `never` |
 | `--quiet` | | Suppress the coverage footer |
 | `--jf` | | JSON-folder mode, as `json_query --jf` |
+| `--collection` | | Read a jsondb collection export from stdin |
+| `--db` | | jsondb path to name in the handoff command |
 | `--with-ancestors` | | Include `..NAME` ancestor expressions in the handoff |
 | `--max-depth` | | Nesting guard (default 512) |
 | `--jobs` | `-j` | Worker count (0 = one per CPU) |
@@ -148,6 +150,25 @@ The machine formats carry per-hit array indices, which the text view elides, and
 always end with a coverage record whose `complete` field is the one to test —
 without it a consumer cannot distinguish a clean miss from a corpus that failed
 to load.
+
+## Document stores
+
+If the JSON is in a [jsondb](../jsondb/) collection rather than in files, pipe an
+export in and name the collection:
+
+```sh
+jsondb export sites | json_find ASSET_TAG --collection sites --db app.sqlite
+→ jsondb -d app.sqlite nquery "sites.site,ASSET_TAG,_FILE"
+```
+
+A collection and a `--jf` subdirectory are the same idea — both supply the first
+path segment, which is what makes a field at the document root addressable — and
+jsondb's query grammar is identical to `json_query`'s, so the emitted query is
+the same either way.
+
+This ships every document; there is no server-side search. The footer says so,
+and reports completeness as supplied by the producer rather than claiming a
+coverage it could not verify.
 
 ## See also
 

@@ -419,6 +419,60 @@ skip with a reason rather than silently searched, because a hit found somewhere
 
 ---
 
+## Document stores
+
+If your JSON lives in a [jsondb](https://pmuston.github.io/jsondb/) collection
+rather than in files, pipe an export in and name the collection:
+
+```bash
+jsondb export sites | json_find ASSET_TAG --collection sites --db app.sqlite
+```
+
+```
+ASSET_TAG       key    exact       1 hit · 1 document
+  values   "Reactor1"
+  files    reactor
+  → jsondb -d app.sqlite nquery "sites,ASSET_TAG,_FILE"
+
+site.ASSET_TAG  key    exact       1 hit · 1 document
+  values   "ControlRoom"
+  → jsondb -d app.sqlite nquery "sites.site,ASSET_TAG,_FILE"
+```
+
+`--collection` does three things. It reads the input as a **sequence of
+documents** rather than one JSON value, so the array an export wraps them in
+does not show up as a level in every shape. It supplies the **collection name**
+as the first path segment — the same job the subdirectory does in `--jf` — which
+is what makes a field at the document root addressable. And it points the
+handoff at `jsondb nquery` instead of `json_query`.
+
+The query string itself is unchanged: jsondb's native query grammar is the same
+as `json_query`'s, so what json_find emits is valid for both.
+
+Documents are named by their `_filename` field, which is what `importdb` stamps
+and what the `_FILE` column reads back. Without one, `_id` is used, then an
+ordinal.
+
+Both export shapes are accepted — a single JSON array, or one document per line
+— so it works with whatever your producer emits.
+
+`--db` only affects the rendered command. Omit it and the handoff reads
+`jsondb nquery "…"`, relying on jsondb's default database.
+
+### What this does not do
+
+It ships every document to json_find. That is fine for a collection you can hold
+in memory and wrong for one you cannot; there is no server-side search here.
+
+And **completeness is the producer's claim, not json_find's** — the footer says
+so. `jsondb export --limit` truncates silently, and nothing downstream can tell
+a partial collection from a whole one, so a `--collection` run never asserts the
+coverage it cannot verify.
+
+Store-injected fields are searched like any other. `_filename` and `_id` are
+real values in the store, so they can match, and hiding them would be a silent
+skip.
+
 ## Scripting
 
 ```bash
