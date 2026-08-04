@@ -49,30 +49,30 @@ only need it when you act on a handoff.
 ## Quick start
 
 ```bash
-json_find PLANT_AREA testdata/plant.json
+json_find ASSET_TAG testdata/plant.json
 ```
 
 ```
-json_find "PLANT_AREA" — 5 shapes · 6 hits · 1 file
+json_find "ASSET_TAG" — 5 shapes · 6 hits · 1 file
 
-sites[].PLANT_AREA              key    exact       2 hits · 1 file
+sites[].ASSET_TAG              key    exact       2 hits · 1 file
   values   "SiteA", "SiteB"
   files    testdata/plant.json (2)
-  → json_query -q "sites,PLANT_AREA,_FILE" -- testdata/plant.json
+  → json_query -q "sites,ASSET_TAG,_FILE" -- testdata/plant.json
 
-PLANT_AREA                      key    exact       1 hit · 1 file
+ASSET_TAG                      key    exact       1 hit · 1 file
   values   "TopLevelArea"
   files    testdata/plant.json
   ⚠ not expressible as a json_query path
     root-level: json_query cannot address the document root in file mode; use --jf mode…
 
-equipment.area.PLANT_AREA_NAME  key    substring   1 hit · 1 file
+equipment.area.ASSET_TAG_NAME  key    substring   1 hit · 1 file
   values   "Main Reactor"
   files    testdata/plant.json
-  → json_query -q "equipment.area,PLANT_AREA_NAME,_FILE" -- testdata/plant.json
+  → json_query -q "equipment.area,ASSET_TAG_NAME,_FILE" -- testdata/plant.json
 
-Searched 1 file (345 B) in 0ms. Skipped 0.
-Surfaces: key, value, filename. Roots: testdata/plant.json. Tiers active: exact, iexact, substring, normalized, fuzzy(distance 2, keys only).
+Searched 1 file (339 B) in 0ms. Skipped 0.
+Surfaces: key, value, filename. Roots: testdata/plant.json. Tiers active: exact, iexact, substring, normalized, fuzzy(distance 1, keys only).
 ```
 
 The pattern is **never** a path. There is no invocation in which you have to
@@ -87,7 +87,7 @@ If you give no path at all, the current directory is searched recursively.
 Results are grouped by **shape**, not listed one per hit.
 
 ```
-sites[].PLANT_AREA              key    exact       2 hits · 1 file
+sites[].ASSET_TAG              key    exact       2 hits · 1 file
 └──────┬───────────┘            └─┬─┘  └──┬──┘     └───┬───┘
    the shape                   surface   tier       counts
   values   "SiteA", "SiteB"        ← sample values found there
@@ -95,8 +95,8 @@ sites[].PLANT_AREA              key    exact       2 hits · 1 file
   → json_query …                   ← paste this
 ```
 
-**Shape** is the location with array indices elided. `sites[0].PLANT_AREA` and
-`sites[1].PLANT_AREA` collapse into `sites[].PLANT_AREA ×2`. The `[]` marker is
+**Shape** is the location with array indices elided. `sites[0].ASSET_TAG` and
+`sites[1].ASSET_TAG` collapse into `sites[].ASSET_TAG ×2`. The `[]` marker is
 the useful part: it tells you the structure *repeats*, which is usually what you
 needed to learn. Indices are not shown because `json_query` has no index syntax
 — there is nothing you could do with them downstream. If you want exact
@@ -120,7 +120,7 @@ Discovery is iterative: cast wide, read the shape, tighten, hand off.
 ### 1. Cast wide
 
 ```bash
-json_find PLANT_AREA data/
+json_find ASSET_TAG data/
 ```
 
 Give it the fragment and nothing else. Over-inclusion is deliberate — see
@@ -129,22 +129,22 @@ Give it the fragment and nothing else. Over-inclusion is deliberate — see
 ### 2. Read the shape
 
 ```bash
-json_find PLANT_AREA testdata/plant.json --tree --siblings
+json_find ASSET_TAG testdata/plant.json --tree --siblings
 ```
 
 ```
 equipment   (3 hits below)
-  PLANT_AREA   key    exact       1 hit · 1 file
+  ASSET_TAG   key    exact       1 hit · 1 file
     values   "EquipmentLevel"
     siblings area
   area   (2 hits below)
-    PLANT_AREA   key    exact       1 hit · 1 file
+    ASSET_TAG   key    exact       1 hit · 1 file
       values   "Reactor1"
-      siblings PLANT_AREA_NAME, type, capacity_mw
-    PLANT_AREA_NAME   key    substring   1 hit · 1 file
+      siblings ASSET_TAG_NAME, type, capacity_mw
+    ASSET_TAG_NAME   key    substring   1 hit · 1 file
       values   "Main Reactor"
 sites[]   (2 hits below)
-  PLANT_AREA   key    exact       2 hits · 1 file
+  ASSET_TAG   key    exact       2 hits · 1 file
     values   "SiteA", "SiteB"
     siblings name
 ```
@@ -155,13 +155,13 @@ by rank — it answers *how is this corpus shaped*, where the default view answe
 
 `--siblings` is the one to remember. It lists the **other** keys of each matched
 container, so you learn what else is queryable at a path you now know is real.
-Above, having found `PLANT_AREA` you also discover `type` and `capacity_mw` live
+Above, having found `ASSET_TAG` you also discover `type` and `capacity_mw` live
 beside it.
 
 ### 3. Narrow
 
 ```bash
-json_find PLANT_AREA testdata/corpus --under equipment
+json_find ASSET_TAG testdata/corpus --under equipment
 ```
 
 Narrowing is always optional and always comes *after* you know the shape. See
@@ -172,7 +172,7 @@ Narrowing is always optional and always comes *after* you know the shape. See
 Copy the `→` line. That is the whole point of the tool.
 
 ```bash
-json_query -q "equipment.area,PLANT_AREA,_FILE" -- testdata/plant.json
+json_query -q "equipment.area,ASSET_TAG,_FILE" -- testdata/plant.json
 ```
 
 ---
@@ -182,20 +182,20 @@ json_query -q "equipment.area,PLANT_AREA,_FILE" -- testdata/plant.json
 Matching is **tiered, not boolean**. Every tier is active at once and each hit
 records the best it achieved. Near-misses are findings, not noise.
 
-| Tier | Matches | Example: pattern `PLANT_AREA` finds |
+| Tier | Matches | Example: pattern `ASSET_TAG` finds |
 |---|---|---|
-| `exact` | identical | `PLANT_AREA` |
-| `iexact` | identical, ignoring case | `plant_area` |
-| `substring` | contained anywhere | `PLANT_AREA_NAME` |
-| `normalized` | ignoring `_ - . space` and case | `plantArea`, `plant-area` |
-| `fuzzy` | within an edit or two | `PLANT_AERA` (transposed) |
+| `exact` | identical | `ASSET_TAG` |
+| `iexact` | identical, ignoring case | `asset_tag` |
+| `substring` | contained anywhere | `ASSET_TAG_NAME` |
+| `normalized` | ignoring `_ - . space` and case | `assetTag`, `asset-tag` |
+| `fuzzy` | within an edit or two | `ASSET_TGA` (transposed) |
 
 ```bash
-json_find plantarea testdata/plant.json     # → normalized
-json_find PLANT_AERA testdata/plant.json    # → fuzzy
+json_find assettag testdata/plant.json     # → normalized
+json_find ASSET_TGA testdata/plant.json    # → fuzzy
 ```
 
-Both find `sites[].PLANT_AREA`. Searching for what you half-remember is the
+Both find `sites[].ASSET_TAG`. Searching for what you half-remember is the
 intended use.
 
 **Fuzzy applies to keys and filenames, not values**, unless you pass
@@ -207,9 +207,9 @@ is active is stated in the footer, so the restriction is never silent.
 To tighten:
 
 ```bash
-json_find PLANT_AREA data/ --exact             # exact/iexact only
-json_find PLANT_AREA data/ --max-tier substring
-json_find PLANT_AREA data/ --case-sensitive
+json_find ASSET_TAG data/ --exact             # exact/iexact only
+json_find ASSET_TAG data/ --max-tier substring
+json_find ASSET_TAG data/ --case-sensitive
 json_find 'PLANT_.*_NAME' data/ --regex
 ```
 
@@ -244,10 +244,10 @@ gives you one result, not one per leaf beneath it.
 Each group ends in a line you can paste.
 
 ```
-→ json_query -q "sites,PLANT_AREA,_FILE" -- testdata/plant.json
+→ json_query -q "sites,ASSET_TAG,_FILE" -- testdata/plant.json
 ```
 
-Note the shape was `sites[].PLANT_AREA` but the query path is `sites`. They are
+Note the shape was `sites[].ASSET_TAG` but the query path is `sites`. They are
 deliberately different strings: `json_query` iterates arrays transparently, so
 the path never contains `[]` or an index. `_FILE` is added so you can tell which
 file each row came from.
@@ -264,7 +264,7 @@ has to be flagged here or not at all.
 
 ```
 equipment.tags[]  value  exact       1 hit · 1 file
-  values   "PLANT_AREA"
+  values   "ASSET_TAG"
   ⚠ json_query -q "equipment,tags,_FILE" -- testdata/scalar_array.json
     whole-array: this column returns the whole array, not the matched element
 ```
@@ -342,12 +342,12 @@ Every flag here is optional and none is ever required to get results. They exist
 for the second and third pass, once the wide search has taught you the shape.
 
 ```bash
-json_find PLANT_AREA data/ --under equipment          # by location
-json_find PLANT_AREA data/ --under sites[].equipment[] # shapes paste in as-is
+json_find ASSET_TAG data/ --under equipment          # by location
+json_find ASSET_TAG data/ --under sites[].equipment[] # shapes paste in as-is
 json_find 800 data/ --type number                      # by JSON type
-json_find PLANT_AREA data/ --file 'reactor*.json'      # by filename
-json_find PLANT_AREA data/ --keys                      # by surface
-json_find PLANT_AREA data/ --limit 10                  # by count
+json_find ASSET_TAG data/ --file 'reactor*.json'      # by filename
+json_find ASSET_TAG data/ --keys                      # by surface
+json_find ASSET_TAG data/ --limit 10                  # by count
 ```
 
 `--under` matches a **contiguous run** of path segments anywhere in the shape,
@@ -380,17 +380,17 @@ If your corpus is organised as one subdirectory per element type — the layout
 `json_query --jf` expects — use the same flag here:
 
 ```bash
-json_find PLANT_AREA --jf testdata/corpus
+json_find ASSET_TAG --jf testdata/corpus
 ```
 
 ```
-equipment[].PLANT_AREA  key    exact       2 hits · 1 file
+equipment[].ASSET_TAG  key    exact       2 hits · 1 file
   files    sites/legacy.json (2)
-  → json_query --jf testdata/corpus -q "sites.equipment,PLANT_AREA,_FILE"
+  → json_query --jf testdata/corpus -q "sites.equipment,ASSET_TAG,_FILE"
 
-PLANT_AREA              key    exact       1 hit · 1 file
+ASSET_TAG              key    exact       1 hit · 1 file
   files    sites/reactor.json
-  → json_query --jf testdata/corpus -q "sites,PLANT_AREA,_FILE"
+  → json_query --jf testdata/corpus -q "sites,ASSET_TAG,_FILE"
 ```
 
 The subdirectory name (`sites`) becomes the first path segment. This is worth
@@ -405,7 +405,7 @@ the command to re-run:
 ```
 json_find: 2 groups (2 hits) at the document root have no file-mode handoff.
            This corpus looks like a JSON-folder layout, so --jf would express them:
-             json_find PLANT_AREA --jf testdata/corpus
+             json_find ASSET_TAG --jf testdata/corpus
 ```
 
 It only appears when both things are true — handoffs were actually lost, and
@@ -422,16 +422,16 @@ skip with a reason rather than silently searched, because a hit found somewhere
 ## Scripting
 
 ```bash
-json_find PLANT_AREA data/ -F paths     # bare query strings, one per line
-json_find PLANT_AREA data/ -F jsonl     # one record per hit, plus coverage
-json_find PLANT_AREA data/ -F json      # a single document
+json_find ASSET_TAG data/ -F paths     # bare query strings, one per line
+json_find ASSET_TAG data/ -F jsonl     # one record per hit, plus coverage
+json_find ASSET_TAG data/ -F json      # a single document
 ```
 
 `--format paths` is the pipe-friendly one:
 
 ```
-sites.equipment,PLANT_AREA,_FILE
-sites,PLANT_AREA,_FILE
+sites.equipment,ASSET_TAG,_FILE
+sites,ASSET_TAG,_FILE
 json_find: 1 group(s) omitted — not expressible as a json_query path
 ```
 
@@ -442,9 +442,9 @@ stderr, so the stream stays clean.
 json_query-ready forms:
 
 ```json
-{"type":"hit","file":"data/plant.json","display_path":"sites[0].PLANT_AREA",
- "shape":"sites[].PLANT_AREA","container_path":"sites","key_expr":"PLANT_AREA",
- "query":"sites,PLANT_AREA,_FILE","surface":"key","tier":"exact",
+{"type":"hit","file":"data/plant.json","display_path":"sites[0].ASSET_TAG",
+ "shape":"sites[].ASSET_TAG","container_path":"sites","key_expr":"ASSET_TAG",
+ "query":"sites,ASSET_TAG,_FILE","surface":"key","tier":"exact",
  "value":"SiteA","expressible":true,"caveats":[]}
 ```
 

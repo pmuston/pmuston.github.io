@@ -31,17 +31,17 @@ already know where to look — not knowing is why you are here. With no `path`,
 the current directory is searched recursively.
 
 ```console
-$ json_find PLANT_AREA data/
-json_find "PLANT_AREA" — 3 shapes · 63 hits · 4 files
+$ json_find ASSET_TAG data/
+json_find "ASSET_TAG" — 3 shapes · 63 hits · 4 files
 
-sites[].PLANT_AREA              key    exact       18 hits · 2 files
+sites[].ASSET_TAG              key    exact       18 hits · 2 files
   values   "SiteA", "SiteB", "SiteC", … (18 distinct)
   files    plant.json (9), annex.json (9)
-  → json_query -q "sites,PLANT_AREA,_FILE" -- data/plant.json data/annex.json
+  → json_query -q "sites,ASSET_TAG,_FILE" -- data/plant.json data/annex.json
 
-equipment.area.PLANT_AREA_NAME  key    substring   12 hits · 3 files
+equipment.area.ASSET_TAG_NAME  key    substring   12 hits · 3 files
   values   "Main Reactor", "Boiler House 3", … (12 distinct)
-  → json_query -q "equipment.area,PLANT_AREA_NAME,_FILE" -- data/plant.json
+  → json_query -q "equipment.area,ASSET_TAG_NAME,_FILE" -- data/plant.json
 
 Searched 4 files (2.1 MB) in 41ms. Skipped 0.
 ```
@@ -67,13 +67,13 @@ terminal success state is a path expression you can paste.
 Matching is tiered, not boolean. Every tier is active at once and each result
 reports the best it achieved, so near-misses are findings rather than noise.
 
-| Tier | Pattern `PLANT_AREA` also finds |
+| Tier | Pattern `ASSET_TAG` also finds |
 |---|---|
-| `exact` | `PLANT_AREA` |
-| `iexact` | `plant_area` |
-| `substring` | `PLANT_AREA_NAME` |
-| `normalized` | `plantArea`, `plant-area` |
-| `fuzzy` | `PLANT_AERA` |
+| `exact` | `ASSET_TAG` |
+| `iexact` | `asset_tag` |
+| `substring` | `ASSET_TAG_NAME` |
+| `normalized` | `assetTag`, `asset-tag` |
+| `fuzzy` | `ASSET_TGA` |
 
 Fuzzy applies to keys and filenames only unless `--fuzzy-values` is given, and
 is off entirely for patterns of four characters or fewer. Cap the ladder with
@@ -139,9 +139,9 @@ present" must test for `1` specifically, never merely non-zero.
 ## Scripting
 
 ```sh
-json_find PLANT_AREA data/ -F paths     # bare query strings, one per line
-json_find PLANT_AREA data/ -F jsonl     # one record per hit, plus coverage
-json_find PLANT_AREA data/ -F json      # a single document
+json_find ASSET_TAG data/ -F paths     # bare query strings, one per line
+json_find ASSET_TAG data/ -F jsonl     # one record per hit, plus coverage
+json_find ASSET_TAG data/ -F json      # a single document
 ```
 
 The machine formats carry per-hit array indices, which the text view elides, and
