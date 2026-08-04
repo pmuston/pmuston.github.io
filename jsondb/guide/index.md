@@ -539,6 +539,22 @@ Each document gets a generated `_id`, and the source file's base name (without
 key expression reads back. Non-`.json` files, dotfiles, and deeper nesting are
 skipped.
 
+**Anything skipped is reported on stderr**, next to the count, and hidden
+`.json` files are named:
+
+```console
+$ jsondb importdb corpus
+collection "modules": imported 4200 document(s), skipped 1 hidden JSON file (.json)
+done: imported 12168 document(s), skipped 5 files
+```
+
+That matters because a dotfile like `.json` is a perfectly good document to
+other readers of the same directory — so a silent skip leaves a collection
+quietly short, and a skip you cannot see is indistinguishable from an absence.
+`imported` plus the hidden-`.json` count reconciles with
+`find <dir> -mindepth 2 -maxdepth 2 -name '*.json' | wc -l`. A clean corpus
+prints nothing extra.
+
 ---
 
 ## 6. Querying
