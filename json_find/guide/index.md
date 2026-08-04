@@ -396,8 +396,21 @@ PLANT_AREA              key    exact       1 hit · 1 file
 The subdirectory name (`sites`) becomes the first path segment. This is worth
 knowing for a second reason: **root-level matches are inexpressible in file mode
 but expressible under `--jf`**, because the element name supplies the segment
-`json_query` needs. If a flat corpus gives you a lot of `root-level` caveats,
-try folder mode.
+`json_query` needs.
+
+You do not have to spot this yourself. If you search such a corpus in file mode
+and lose handoffs to `root-level`, `json_find` says so on stderr and gives you
+the command to re-run:
+
+```
+json_find: 2 groups (87 hits) at the document root have no file-mode handoff.
+           This corpus looks like a JSON-folder layout, so --jf would express them:
+             json_find DISTILLATION_2 --jf data/
+```
+
+It only appears when both things are true — handoffs were actually lost, and
+every file really does sit inside a subdirectory — so it stays quiet on an
+ordinary directory that merely happens to have subfolders.
 
 `--jf` searches exactly what `json_query` would read: `*.json` directly inside
 each immediate subdirectory. Anything else under the parent is reported as a
@@ -478,6 +491,10 @@ part matched. `--exact` removes them.
 `json_query` path — a root-level key and an element of a root-level array are
 addressed identically, because arrays are iterated transparently. Both handoffs
 are correct.
+
+**"Most of my results were omitted from `-F paths`."** Almost always a corpus
+laid out one directory per type, searched in file mode. Root-level matches have
+no file-mode handoff; `--jf` gives them one, and `json_find` will tell you so.
 
 **"I got no results and I expected some."** Read the footer. It names the
 surfaces searched, the tiers active, and any narrowing in effect. If a tier you
