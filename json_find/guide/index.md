@@ -403,9 +403,9 @@ and lose handoffs to `root-level`, `json_find` says so on stderr and gives you
 the command to re-run:
 
 ```
-json_find: 2 groups (87 hits) at the document root have no file-mode handoff.
+json_find: 2 groups (2 hits) at the document root have no file-mode handoff.
            This corpus looks like a JSON-folder layout, so --jf would express them:
-             json_find DISTILLATION_2 --jf data/
+             json_find PLANT_AREA --jf testdata/corpus
 ```
 
 It only appears when both things are true — handoffs were actually lost, and
