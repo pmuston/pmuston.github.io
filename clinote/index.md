@@ -39,6 +39,7 @@ clinote version
 | `-term` | `dumb` | `TERM` for the shell; a real value enables colour auto-detection. |
 | `-poll` | `500ms` | How often the browser polls a running cell. |
 | `-list` | — | List candidate notebooks and exit. |
+| `-allow-local-files` | off | Serve files from the notebook's directory, confined to it. |
 
 clinote prints its URL and waits — it does not open a browser. Ctrl-C stops it.
 
@@ -74,6 +75,42 @@ specification is the authority. Two rules catch people out:
 
 Declare a result kind with `{format=csv}`, `{format=tsv}` or `{format=jsonl}`:
 tables render sortable in the browser and stay plain text on disk.
+
+## Front-matter options
+
+| Key | Effect |
+|---|---|
+| `width: full` | Use the whole window rather than a reading column. |
+| `editable: false` | Withhold editing — the source, prose, and adding, deleting or moving cells. |
+| `local-files: true` | Declare that the notebook displays files from its own directory. |
+
+**`editable: false` never gates running.** It suits a notebook written *for*
+someone rather than by them — a teaching exercise, or a vetted runbook whose steps
+should be run as written. A notebook nobody can run is a document; handing one out
+is precisely so the reader executes it, and running still writes results. It is a
+guard rail against the accidental edit, not a control: anyone can edit the file in
+their editor, and should be able to.
+
+**`local-files: true` declares a need and grants nothing.** A notebook that
+generates a figure links to it the ordinary way, and that file sits beside the
+notebook. Serving it needs the notebook's own directory — which may be a home
+directory or a repository root — so the grant comes from the command line:
+
+```sh
+clinote -allow-local-files notebooks/figures.md
+```
+
+The reason is worth stating plainly: a notebook is exactly the part someone else
+may have written, and a file that could authorise reading its neighbours would be
+authorising itself. Reading `width` from a notebook is safe because honouring it
+only picks a layout; reading a capability is not. Without the flag the page says
+what is missing rather than showing a broken image.
+
+Serving is confined to that directory. Paths escaping it — lexically,
+percent-encoded, or through a symlink — are refused, as are dot-prefixed
+components, so `.git/` and `.env` stay out of reach when a notebook sits in a
+repository root. Served files carry a sandboxing `Content-Security-Policy` and
+`nosniff`, because an SVG can carry script.
 
 ## Examples
 
@@ -136,7 +173,7 @@ notebook.
 - Interactive TUI commands (`vim`, `less`, `htop`) hang the cell.
 - Output is capped per cell; the excess is dropped and marked `truncated`.
 - `exit N` terminates the persistent shell — use `false` or a subshell.
-- Files beside the notebook are not served, so an image link will not render.
+- Files beside the notebook are served only with `-allow-local-files`.
 
 ## Exit status
 
