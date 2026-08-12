@@ -58,7 +58,7 @@ notekit-tool: clinote
 du -d1 -h | sort -hr | head -5
 ```
 
-```output {format=csv, run="2026-08-11T09:41:07Z", tool="clinote/2.0"}
+```output {format=csv, run="2026-08-11T09:41:07Z", tool="clinote/2.2"}
 size,path
 1.2G,./data
 480M,./vendor
@@ -73,8 +73,22 @@ specification is the authority. Two rules catch people out:
 - **Failures are `error` blocks** carrying the exit status, not output with a bad
   exit code.
 
-Declare a result kind with `{format=csv}`, `{format=tsv}` or `{format=jsonl}`:
-tables render sortable in the browser and stay plain text on disk.
+Declare a result kind with `{format=csv}`, `{format=tsv}` or `{format=jsonl}`, or
+pick one from the dropdown in each cell's header: tables render sortable in the
+browser and stay plain text on disk.
+
+Picking a kind rewrites the cell's `{format=…}` **and relabels the result already on
+the page**, so output you have just realised was a table becomes one without
+re-running the command. That is what the control is for — re-running is fine when it
+is cheap. Relabelling changes no data: a result body is the bytes the command
+produced, and `format` says how to read them. An `error` block is left alone, a
+failure not being a table however the cell is labelled.
+
+`tsv` is not `csv` with a different delimiter and is not parsed as one. It has no
+quoting at all, so a field cannot contain a tab or a newline and nothing is
+unescaped — a cell reading `he said "hi", ok` is exactly those characters, quotes
+and comma included. That is what makes it the easy thing to emit from a shell
+(`cut`, `awk -F'\t'`, `psql -A -F$'\t'`) for data that would need quoting as CSV.
 
 ## Front-matter options
 
@@ -83,6 +97,7 @@ tables render sortable in the browser and stay plain text on disk.
 | `width: full` | Use the whole window rather than a reading column. |
 | `editable: false` | Withhold editing — the source, prose, and adding, deleting or moving cells. |
 | `local-files: true` | Declare that the notebook displays files from its own directory. |
+| `requires: [NAME, …]` | Name the environment variables the notebook needs. |
 
 **`editable: false` never gates running.** It suits a notebook written *for*
 someone rather than by them — a teaching exercise, or a vetted runbook whose steps
@@ -112,6 +127,24 @@ components, so `.git/` and `.env` stay out of reach when a notebook sits in a
 repository root. Served files carry a sandboxing `Content-Security-Policy` and
 `nosniff`, because an SVG can carry script.
 
+**`requires:` names what the notebook needs and never blocks.** Handing someone a
+notebook that says what it depends on beats handing them one that fails on cell
+four:
+
+```yaml
+requires: [NEO4J_PW, NEO4J_URL]
+```
+
+The page reports which are unset. Only names are read, and only whether each is
+non-empty, so no value ever reaches the notebook. It does not refuse to open: a
+notebook should be readable without your credentials to hand, and a cell that needs
+one fails on its own terms with a better message than a refusal at the front door.
+
+Write it **inline**, as above. A YAML block list is invisible here — notekit parses
+front matter without a YAML marshaller, deliberately, so that notebooks round-trip
+byte for byte. clinote reports the empty result as a mistake and names the inline
+form rather than silently reporting nothing.
+
 ## Examples
 
 ```sh
@@ -136,6 +169,13 @@ clinote notebooks/graph.md
 - **stdout and stderr interleave**, as in a terminal. The exit status decides the
   block: zero writes `output`, non-zero writes `error`. Quieten a noisy command
   with `cmd 2>/dev/null`.
+- **Run below** runs this cell and every cell after it, for a pipeline whose first
+  stage is too expensive to repeat.
+- **Run all and Run below do not stop at the first failure.** The cells are
+  submitted to a scheduler that serialises them, so the rest are queued by the time
+  one fails. clinote v1 halted the batch on a non-zero exit; if a later stage would
+  run against stale inputs, watch it rather than assuming a red block stopped
+  things.
 - **Interrupt** sends SIGINT to a running command — the way to recover a hung cell
   without stopping the server.
 - **Works without JavaScript**, and cell bodies are editable in the browser.
