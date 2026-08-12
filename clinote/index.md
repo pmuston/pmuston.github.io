@@ -180,6 +180,47 @@ clinote notebooks/graph.md
   without stopping the server.
 - **Works without JavaScript**, and cell bodies are editable in the browser.
 
+## Progress bars and spinners
+
+Cells run under a pty — which is what makes `cd` and shell state persist, and what
+lets tools needing a terminal work at all. The cost is that **every tool thinks it is
+talking to a person**: `[ -t 1 ]` is true in a cell, so anything with a progress
+display draws one. `-term dumb` does not prevent it, because most such tools test
+whether stdout is a terminal rather than what `TERM` says.
+
+A display that redraws one line — a spinner, a percentage — is replayed, so the
+result holds the line as it finally read rather than every frame concatenated. Colour
+is unaffected: a line that did not redraw itself keeps its bytes, and only redrawn
+lines are flattened.
+
+Two things that follow:
+
+- **Overwriting is column by column, as in a terminal.** A tool that omits an
+  erase-to-end-of-line leaves the tail of a longer frame behind — `Downloading 100%`
+  then a carriage return and `Done` reads `Doneloading 100%`. Your terminal shows the
+  same thing, which is why well-behaved tools emit the erase.
+- **Multi-line redraws are not replayed.** `docker pull` with its per-layer bars,
+  `cargo` and `bazel` move the cursor *up* between lines. Replaying that needs a whole
+  screen modelled rather than a line, and a screen is a different artifact from the
+  stream a notebook records.
+
+To stop a tool drawing progress at all:
+
+```sh
+export CI=1                  # honoured widely; the shell persists, so set it once
+some-tool --progress=plain   # or --quiet, --no-progress
+some-tool | cat              # stdout becomes a pipe, so `[ -t 1 ]` is false
+```
+
+`| cat` reports `cat`'s exit status, so a failing command writes an `output` block
+rather than an `error` one. Add `set -o pipefail` in a setup cell if that matters —
+being one shell, it carries to every cell below.
+
+Full-screen programs — `vim`, `less`, `htop` — still hang the cell, and that is a
+boundary rather than a gap. Such a program produces a *screen*; a notebook records a
+*stream*, and the cell never exits, so there would be nothing to write down even if
+the screen were captured. Use Interrupt.
+
 ## Upgrading from v1
 
 Opening a v1 notebook names the fix:
@@ -211,6 +252,7 @@ notebook.
 - The in-memory notebook is authoritative — external edits during a session are
   overwritten on save.
 - Interactive TUI commands (`vim`, `less`, `htop`) hang the cell.
+- Multi-line progress displays are not replayed — see [Progress bars and spinners](#progress-bars-and-spinners).
 - Output is capped per cell; the excess is dropped and marked `truncated`.
 - `exit N` terminates the persistent shell — use `false` or a subshell.
 - Files beside the notebook are served only with `-allow-local-files`.
