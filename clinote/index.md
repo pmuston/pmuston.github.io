@@ -8,6 +8,9 @@ A personal lab notebook for shell commands, in your browser. One Markdown file i
 one notebook; a persistent shell runs the cells and results are written back into
 the same `.md` — plain CommonMark, readable and correct on GitHub.
 
+**New here?** [clinote in five minutes](demo/) walks one real investigation from an
+empty notebook to a file you could commit.
+
 ## Install
 
 ```sh

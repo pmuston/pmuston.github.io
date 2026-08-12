@@ -18,6 +18,7 @@ brew install pmuston/tap/clinote
 ```
 
 [Documentation →](clinote/) &nbsp;·&nbsp;
+[Five-minute demo](clinote/demo/) &nbsp;·&nbsp;
 [Source & releases](https://github.com/pmuston/clinote)
 
 ---
