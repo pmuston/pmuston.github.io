@@ -15,8 +15,11 @@ prioritise the gaps.
 See also [cypher-spec.md](../cypher/), the normative language reference for
 graphdb's dialect.
 
-**graphdb server version at last review:** 0.24.0 — every ✅ and ❌ row below was
-executed against a running server of that version, not inferred from the source.
+**graphdb server version at last review:** 0.28.0 — every ❌ row below was
+executed against a running server of that version, not inferred from the source,
+and the ✅ rows were sampled across every section with the projection and
+ordering rows checked in full (0.27.0 and 0.28.0 changed how `ORDER BY` resolves
+its sort keys).
 **Neo4j reference:** 5.x
 
 ## Legend
@@ -58,7 +61,7 @@ as gq requirements.
 | `RETURN` (+ `AS`, `DISTINCT`, `*`) | ✅ | |
 | `WITH` (chaining, post-`WHERE`) | ✅ | |
 | `UNWIND … AS` | ✅ | Null list → zero rows. |
-| `ORDER BY … ASC\|DESC` | ✅ | |
+| `ORDER BY … ASC\|DESC` | ✅ | Sort keys may name projection aliases or variables in scope before the projection. **After aggregation** a key must be a returned column, a grouping expression, or an aggregate the statement already returns (`ORDER BY count(*)`, 0.28.0+); an aggregate nested in a larger expression is rejected. Fixed in 0.27.0: a property-access sort key in `RETURN`/`WITH` was silently dropped, returning rows in insertion order. |
 | `SKIP` / `LIMIT` | ✅ | |
 | `UNION` / `UNION ALL` | ✅ | Branches must project the same column names; `UNION` dedupes, `UNION ALL` concatenates. Left-associative, independent scopes. |
 | `CALL {…}` subquery | ❌ | |

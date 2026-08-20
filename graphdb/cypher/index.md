@@ -6,7 +6,7 @@ title: graphdb Cypher Reference
 
 # graphdb Cypher — Language Specification
 
-**Applies to graphdb 0.24.0.** This is a normative description of the Cypher
+**Applies to graphdb 0.28.0.** This is a normative description of the Cypher
 dialect graphdb implements, derived from the implementation (lexer, parser,
 planner, executor), not from openCypher. Anything not described here is not
 supported; see [neo4j-parity.md](../parity/) for the comparison matrix
@@ -215,9 +215,22 @@ sortKey    := expr ['ASC' | 'DESC']
 
 - An unaliased item's column name is its rendered expression text; complex
   expressions render as `expr`.
-- `ORDER BY` and a `WITH ... WHERE` may reference the projection's own aliases;
-  `RETURN`/`WITH` items may reference only variables already bound.
-- Referencing an unbound variable is an error.
+- `RETURN`/`WITH` items may reference only variables already bound.
+- `ORDER BY` and a `WITH ... WHERE` may reference the projection's own aliases
+  **and** the variables that were in scope before the projection, so
+  `RETURN n.name AS Name ORDER BY n.rank` sorts by a property that is not
+  returned. An alias shadows an input variable of the same name.
+- After aggregation those input variables no longer exist. An `ORDER BY` key is
+  then valid only if it is a returned column or is one of the grouping
+  expressions (`RETURN n.name AS Name, count(*) AS c ORDER BY n.name`), or an
+  aggregate the statement already returns (`ORDER BY count(*)`) — read from the
+  column holding it, since an aggregate cannot be recomputed per row after
+  grouping. An aggregate inside a larger expression (`ORDER BY count(*) + 1`)
+  and an aggregate the statement does not return are both errors, as is any
+  other key that cannot be answered once rows are grouped.
+- Referencing an unbound variable is an error. A *missing property* is not: the
+  store is schemaless, so `ORDER BY n.nosuchprop` sorts every row by null, which
+  leaves the order unchanged.
 - `WITH` ends a scope: only projected names are visible downstream.
 
 ---

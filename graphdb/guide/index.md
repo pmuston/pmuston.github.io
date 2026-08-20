@@ -6,7 +6,7 @@ title: graphdb User Guide
 
 # User Guide
 
-**Applies to graphdb 0.25.0.** Every example below is executed against a real
+**Applies to graphdb 0.28.0.** Every example below is executed against a real
 server by the test suite (`TestUserGuideExamples`), so they are checked on every
 change rather than verified once.
 
@@ -17,7 +17,7 @@ comparison matrix against Neo4j, and `man graphdb` is the offline CLI reference.
 
 > Check what you are actually talking to: `curl -s localhost:8080/ | jq .version`
 > reports the server's version and a `features` list. This guide describes
-> 0.25.0; an older instance will reject some of what follows.
+> 0.28.0; an older instance will reject some of what follows.
 
 - [Install and run](#install-and-run)
 - [Configuration](#configuration)
@@ -272,6 +272,14 @@ cy '{"query":"MATCH (p:Person) RETURN p.name AS name, p.age AS age ORDER BY age 
 
 cy '{"query":"MATCH (:Person)-[:WORKS_AT]->(c:Company) RETURN DISTINCT c.name"}'
 # Acme, Globex
+```
+
+A sort key may name a projection alias, as above, or a variable that was in
+scope before the `RETURN` — including a property you are not returning:
+
+```bash
+cy '{"query":"MATCH (p:Person) RETURN p.name AS name ORDER BY p.age DESC"}'
+# Dave, Bob, Alice, Carol   (sorted by age, which is not a returned column)
 ```
 
 ### Aggregation
