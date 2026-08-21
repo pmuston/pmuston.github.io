@@ -38,6 +38,7 @@ brew install cyrep
 ```
 
 [Documentation →](cyrep/) &nbsp;·&nbsp;
+[Five-minute demo](cyrep/demo/) &nbsp;·&nbsp;
 [Source & releases](https://github.com/pmuston/homebrew-cyrep)
 
 ---

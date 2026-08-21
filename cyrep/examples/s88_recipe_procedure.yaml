@@ -1,0 +1,88 @@
+# ISA-88 / IEC 61512 procedural model — the recipe tree.
+#
+# Runs against examples/s88-seed.cypher. Three levels of nested forEach:
+# Procedure → Unit Procedure → Operation, then the phases each operation
+# runs and the formula parameters those phases carry.
+#
+#   cyrep run examples/s88_recipe_procedure.yaml --output out/recipe.md
+#
+# Every outer binding stays addressable at every depth — the deepest
+# heading below references all three.
+
+report:
+  title: "S88 Recipe Procedures"
+  config:
+    frontmatter: true
+    sectionMarkers: true
+
+  blocks:
+    - type: forEach
+      query: |
+        MATCH (p:Procedure)
+        RETURN p.name AS name
+        ORDER BY name
+      as: procedure
+      key: name
+      blocks:
+        - type: heading
+          level: 1
+          text: "Procedure: {{ procedure.name }}"
+
+        - type: text
+          body: |
+            Procedural hierarchy per IEC 61512-1: procedure → unit
+            procedure → operation → phase. Phases are hosted by units and
+            acquire equipment modules at run time.
+
+        - type: forEach
+          query: |
+            MATCH (p:Procedure {name: $procedure.name})-[:HAS_STEP]->(up:UnitProcedure)
+            RETURN up.name AS name
+            ORDER BY name
+          as: unitProc
+          key: name
+          skipIfEmpty: true
+          blocks:
+            - type: heading
+              level: 2
+              text: "Unit Procedure: {{ unitProc.name }}"
+
+            - type: forEach
+              query: |
+                MATCH (up:UnitProcedure {name: $unitProc.name})-[:HAS_STEP]->(op:Operation)
+                RETURN op.name AS name
+                ORDER BY name
+              as: operation
+              key: name
+              skipIfEmpty: true
+              blocks:
+                # All three bindings in scope simultaneously.
+                - type: heading
+                  level: 3
+                  text: "{{ procedure.name }} / {{ unitProc.name }} / {{ operation.name }}"
+
+                - type: table
+                  title: "Phases Run"
+                  query: |
+                    MATCH (op:Operation {name: $operation.name})-[:RUNS]->(ph:Phase)
+                    RETURN ph.name AS Phase, ph.class AS Class
+                    ORDER BY Phase
+                  empty: "(none)"
+
+                - type: table
+                  title: "Formula Parameters"
+                  query: |
+                    MATCH (op:Operation {name: $operation.name})-[:RUNS]->(:Phase)
+                          -[:HAS_PARAMETER]->(pm:Parameter)
+                    RETURN pm.name AS Parameter, pm.kind AS Kind
+                    ORDER BY Parameter
+                  empty: "(none)"
+
+                - type: table
+                  title: "Equipment Acquired by Phases"
+                  query: |
+                    MATCH (op:Operation {name: $operation.name})-[:RUNS]->(ph:Phase)
+                          -[:ACQUIRES]->(em:EquipmentModule)
+                    RETURN ph.name AS Phase, em.name AS EquipmentModule
+                    ORDER BY Phase, EquipmentModule
+                  empty: "(none)"

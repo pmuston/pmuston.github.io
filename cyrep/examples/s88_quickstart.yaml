@@ -1,0 +1,68 @@
+# The report built step by step in ../docs/five-minutes.md.
+#
+# Runs against examples/s88-seed.cypher (66 nodes, 78 relationships).
+#
+#   cypher-shell -u neo4j -p "$NEO4J_PASSWORD" -f examples/s88-seed.cypher
+#   cyrep run examples/s88_quickstart.yaml --output out/units.md
+#
+# One section per Unit, each with its equipment, control loops and alarms.
+# R102/R103 have no alarms, so the `empty:` fallback shows up in the output.
+
+report:
+  title: "S88 Unit Reference"
+  config:
+    frontmatter: true
+    sectionMarkers: true
+
+  blocks:
+    - type: forEach
+      query: |
+        MATCH (u:Unit)
+        RETURN u.name AS name, u.class AS class
+        ORDER BY name
+      as: unit
+      key: name
+      blocks:
+        - type: heading
+          level: 1
+          text: "{{ unit.name }} ({{ unit.class }})"
+
+        - type: properties
+          # Mode B — the driver query already fetched these.
+          source: unit
+          fields: [name, class]
+
+        - type: table
+          title: "Equipment Modules"
+          query: |
+            MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(em:EquipmentModule)
+            RETURN em.name AS Name
+            ORDER BY Name
+          empty: "(none)"
+
+        - type: table
+          title: "Control Loops"
+          query: |
+            MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(:EquipmentModule)
+                  -[:CONTAINS]->(cm:ControlModule)
+            RETURN cm.name AS Name, cm.class AS Class
+            ORDER BY Name
+          empty: "(none)"
+
+        - type: table
+          title: "Alarms"
+          query: |
+            MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(:EquipmentModule)
+                  -[:CONTAINS]->(:ControlModule)-[:HAS_ATTRIBUTE]->(a:Attribute)
+            WHERE a.type = 'ALARM'
+            RETURN a.name AS Alarm
+            ORDER BY Alarm
+          empty: "(no alarms configured)"
+
+        - type: table
+          title: "Phases Hosted"
+          query: |
+            MATCH (u:Unit {name: $unit.name})-[:HOSTS]->(p:Phase)
+            RETURN p.name AS Phase, p.class AS Class
+            ORDER BY Phase
+          empty: "(none)"

@@ -1,0 +1,83 @@
+# ISA-88 / IEC 61512 physical model — the full equipment hierarchy.
+#
+# Runs against examples/s88-seed.cypher. Demonstrates nested forEach: the
+# outer `cell` binding stays addressable inside the inner block alongside
+# `unit`, in both Jinja and Cypher.
+#
+#   cyrep run examples/s88_physical_model.yaml --output out/physical.md
+#
+# Walks Area → Process Cell → Unit → Equipment Module → Control Module.
+
+report:
+  title: "S88 Physical Model"
+  config:
+    frontmatter: true
+    sectionMarkers: true
+
+  blocks:
+    - type: forEach
+      query: |
+        MATCH (a:Area)-[:CONTAINS]->(pc:ProcessCell)
+        RETURN pc.name AS name, a.name AS area
+        ORDER BY name
+      as: cell
+      key: name
+      blocks:
+        - type: heading
+          level: 1
+          text: "Process Cell: {{ cell.name }}"
+
+        - type: properties
+          source: cell
+          fields: [name, area]
+
+        - type: forEach
+          query: |
+            MATCH (pc:ProcessCell {name: $cell.name})-[:CONTAINS]->(u:Unit)
+            RETURN u.name AS name, u.class AS class
+            ORDER BY name
+          as: unit
+          key: name
+          skipIfEmpty: true
+          blocks:
+            # Both bindings in scope at once.
+            - type: heading
+              level: 2
+              text: "{{ cell.name }} / {{ unit.name }} [{{ unit.class }}]"
+
+            - type: table
+              title: "Equipment Modules"
+              query: |
+                MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(em:EquipmentModule)
+                RETURN em.name AS Name
+                ORDER BY Name
+              empty: "(none)"
+
+            - type: table
+              title: "Control Modules"
+              query: |
+                MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(em:EquipmentModule)
+                      -[:CONTAINS]->(cm:ControlModule)
+                RETURN cm.name AS Name, cm.class AS Class, em.name AS ParentEM
+                ORDER BY Name
+              empty: "(none)"
+
+            - type: table
+              title: "Loop Attributes"
+              query: |
+                MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(:EquipmentModule)
+                      -[:CONTAINS]->(:ControlModule)-[:HAS_ATTRIBUTE]->(a:Attribute)
+                WHERE a.type <> 'ALARM'
+                RETURN a.name AS Attribute, a.type AS Type
+                ORDER BY Attribute
+              empty: "(none)"
+
+            - type: table
+              title: "Alarms"
+              query: |
+                MATCH (u:Unit {name: $unit.name})-[:CONTAINS]->(:EquipmentModule)
+                      -[:CONTAINS]->(:ControlModule)-[:HAS_ATTRIBUTE]->(a:Attribute)
+                WHERE a.type = 'ALARM'
+                RETURN a.name AS Alarm
+                ORDER BY Alarm
+              empty: "(no alarms configured)"

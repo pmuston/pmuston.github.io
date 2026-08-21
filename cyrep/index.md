@@ -127,6 +127,12 @@ A truncated table carries a warning line naming both counts.
 `<!-- error: ... -->` marker. Connection failures stay fatal regardless: there
 is nothing left to continue against.
 
+## More
+
+- [**cyrep in 5 minutes**](demo/) — load a graph, write a report, get Markdown.
+- [Authoring guide](authoring/) — the rules that matter once reports get real.
+- [Examples](examples/) — the seed and four reports that run against it.
+
 ## Links
 
 - [Releases](https://github.com/pmuston/homebrew-cyrep/releases)

@@ -1,0 +1,45 @@
+# Canonical cyrep example.
+# See ../cyrep-spec.md for the full specification.
+# Renders one Markdown section per Module node, each with two attribute tables.
+
+report:
+  title: "Module Reference"
+  config:
+    frontmatter: true
+    sectionMarkers: true
+
+  blocks:
+    - type: forEach
+      query: |
+        MATCH (m:Module)
+        RETURN m.name AS name, m.tag AS tag, m.description AS description
+        ORDER BY m.tag
+      as: module
+      key: tag       # the column that uniquely identifies a Module row
+      blocks:
+        - type: heading
+          level: 1
+          text: "Module: {{ module.name }} ({{ module.tag }})"
+
+        - type: properties
+          # Mode B: read from the enclosing forEach row — no extra query.
+          fields: [description, tag]
+          source: module
+
+        - type: table
+          title: "Analog Attributes"
+          query: |
+            MATCH (m:Module {tag: $module.tag})-[:HAS_ATTRIBUTE]->(a:Attribute)
+            WHERE a.type = 'analog'
+            RETURN a.name AS Name, a.units AS Units, a.range AS Range
+            ORDER BY a.name
+          empty: "(none)"
+
+        - type: table
+          title: "Discrete Attributes"
+          query: |
+            MATCH (m:Module {tag: $module.tag})-[:HAS_ATTRIBUTE]->(a:Attribute)
+            WHERE a.type = 'discrete'
+            RETURN a.name AS Name, a.states AS States
+            ORDER BY a.name
+          empty: "(none)"
