@@ -23,6 +23,25 @@ brew install pmuston/tap/clinote
 
 ---
 
+## cyrep
+
+Turn graph data into **Markdown shaped for LLM context**, driven by a YAML
+report definition. Iterating blocks walk the graph and leaf blocks render tables,
+property lists and headings; output is deterministic and diffable, so a report
+can be regenerated and diffed rather than re-read. Speaks Neo4j over Bolt and
+graphdb over HTTP.
+
+```sh
+brew tap pmuston/cyrep
+brew trust pmuston/cyrep
+brew install cyrep
+```
+
+[Documentation →](cyrep/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-cyrep)
+
+---
+
 ## csvpub
 
 Replay a timestamped CSV onto **NATS** or **MQTT** on a scaled-time schedule, one

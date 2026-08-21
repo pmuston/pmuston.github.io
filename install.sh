@@ -47,6 +47,17 @@ case "$arch" in x86_64|amd64) arch=amd64;; aarch64|arm64) arch=arm64;; *) echo "
 if [ -z "${VERSION:-}" ]; then
   VERSION="$(final_url "https://github.com/$OWNER/$REPO/releases/latest")"
   VERSION="${VERSION##*/}"
+  # GitHub's "latest" excludes pre-releases, and the redirect then lands on the
+  # releases *list* instead of a tag — so a tool whose only release is a
+  # pre-release would resolve to "releases" and fail on a nonsense asset name.
+  # The atom feed includes pre-releases and needs no API token either.
+  case "$VERSION" in
+    releases|latest|"")
+      VERSION="$(fetch "https://github.com/$OWNER/$REPO/releases.atom" \
+        | sed -n 's|.*<id>tag:github.com,2008:Repository/[0-9]*/\([^<]*\)</id>.*|\1|p' \
+        | head -1)"
+      ;;
+  esac
 fi
 case "$VERSION" in v*) ;; *) VERSION="v$VERSION";; esac
 [ "$VERSION" != "v" ] && [ "${VERSION#v}" != "latest" ] || { echo "error: could not resolve version (set VERSION=)" >&2; exit 1; }

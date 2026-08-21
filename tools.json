@@ -1,4 +1,14 @@
 {
-  "graphdb": { "owner": "pmuston", "repo": "homebrew-graphdb" },
-  "reshape-cli": { "owner": "pmuston", "repo": "homebrew-reshape" }
+  "cyrep": {
+    "owner": "pmuston",
+    "repo": "homebrew-cyrep"
+  },
+  "graphdb": {
+    "owner": "pmuston",
+    "repo": "homebrew-graphdb"
+  },
+  "reshape-cli": {
+    "owner": "pmuston",
+    "repo": "homebrew-reshape"
+  }
 }
