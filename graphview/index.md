@@ -11,13 +11,26 @@ no build step and no internet access.
 
 ## Install
 
+### Homebrew (macOS & Linux)
+
 ```sh
 brew tap pmuston/graphview
 brew trust pmuston/graphview   # required for third-party taps
 brew install graphview
 ```
 
-After installing, `man graphview` has the full reference offline.
+### Linux / no package manager
+
+```sh
+curl -fsSL https://pmuston.github.io/install.sh | sh -s graphview
+```
+
+Installs the binary to `~/.local/bin` and the man page alongside it — no root,
+no package manager. The download is checksum-verified against the release.
+Re-run to upgrade. Pin a version with `VERSION=v0.1.1`, or change the location
+with `BIN_DIR=/usr/local/bin` (needs write access).
+
+After installing either way, `man graphview` has the full reference offline.
 
 ## Usage
 
