@@ -7,6 +7,10 @@
     "owner": "pmuston",
     "repo": "homebrew-graphdb"
   },
+  "graphview": {
+    "owner": "pmuston",
+    "repo": "homebrew-graphview"
+  },
   "reshape-cli": {
     "owner": "pmuston",
     "repo": "homebrew-reshape"

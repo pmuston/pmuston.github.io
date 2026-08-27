@@ -69,9 +69,16 @@ tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 echo "Downloading $asset ..." >&2
 fetch_to "$base/$asset" "$tmp/$asset"
 
-# Verify against the release's checksums.txt when both sides are available.
-if fetch_to "$base/checksums.txt" "$tmp/checksums.txt" 2>/dev/null; then
-  want="$(grep " $asset\$" "$tmp/checksums.txt" 2>/dev/null | awk '{print $1}' || true)"
+# Verify against the release's checksum manifest. Two names are in use across
+# the tools: SHA256SUMS (what `sha256sum -c` expects) and the older
+# checksums.txt. Accept either, and say so when neither is present — a silent
+# skip looks identical to a successful verification.
+sums=""
+for name in SHA256SUMS checksums.txt; do
+  if fetch_to "$base/$name" "$tmp/$name" 2>/dev/null; then sums="$tmp/$name"; break; fi
+done
+if [ -n "$sums" ]; then
+  want="$(grep " $asset\$" "$sums" 2>/dev/null | awk '{print $1}' || true)"
   got="$(sha256 "$tmp/$asset")"
   if [ -n "$want" ] && [ -n "$got" ]; then
     [ "$want" = "$got" ] || { echo "error: checksum mismatch for $asset" >&2; exit 1; }
@@ -79,6 +86,8 @@ if fetch_to "$base/checksums.txt" "$tmp/checksums.txt" 2>/dev/null; then
   else
     echo "warning: could not verify checksum" >&2
   fi
+else
+  echo "warning: no checksum manifest on this release — skipping verification" >&2
 fi
 
 tar -xzf "$tmp/$asset" -C "$tmp"
