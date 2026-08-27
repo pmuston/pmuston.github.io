@@ -117,6 +117,24 @@ brew install gq
 
 ---
 
+## graphview
+
+A **web-based graph viewer for Neo4j**. Write Cypher, get a WebGL graph you can
+pan, zoom and filter — plus table, tree and raw JSON views of the same result.
+Node labels, colours and grouping are shaped server-side from config, so a schema
+reads sensibly for everyone rather than each user re-deriving it.
+
+```sh
+brew tap pmuston/graphview
+brew trust pmuston/graphview
+brew install graphview
+```
+
+[Documentation →](graphview/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-graphview)
+
+---
+
 ## json_find
 
 Find **where** a fragment lives in a JSON corpus — half a key name, a value you
