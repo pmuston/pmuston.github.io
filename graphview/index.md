@@ -27,8 +27,9 @@ curl -fsSL https://pmuston.github.io/install.sh | sh -s graphview
 
 Installs the binary to `~/.local/bin` and the man page alongside it — no root,
 no package manager. The download is checksum-verified against the release.
-Re-run to upgrade. Pin a version with `VERSION=v0.1.1`, or change the location
-with `BIN_DIR=/usr/local/bin` (needs write access).
+Re-run to upgrade. Pin any release tag with `VERSION=v0.1.2`, change the
+location with `BIN_DIR=/usr/local/bin` (needs write access), or put the man page
+elsewhere with `MAN_DIR=...`.
 
 After installing either way, `man graphview` has the full reference offline.
 
