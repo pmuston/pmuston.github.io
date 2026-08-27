@@ -6,7 +6,7 @@ title: graphdb User Guide
 
 # User Guide
 
-**Applies to graphdb 0.28.0.** Every example below is executed against a real
+**Applies to graphdb 0.30.0.** Every example below is executed against a real
 server by the test suite (`TestUserGuideExamples`), so they are checked on every
 change rather than verified once.
 
@@ -17,7 +17,7 @@ comparison matrix against Neo4j, and `man graphdb` is the offline CLI reference.
 
 > Check what you are actually talking to: `curl -s localhost:8080/ | jq .version`
 > reports the server's version and a `features` list. This guide describes
-> 0.28.0; an older instance will reject some of what follows.
+> 0.30.0; an older instance will reject some of what follows.
 
 - [Install and run](#install-and-run)
 - [Configuration](#configuration)
@@ -69,6 +69,7 @@ Precedence is **defaults < config file < environment < command-line flags**.
 | `-max-varlen-depth` | `GRAPHDB_MAX_VARLEN_DEPTH` | `15` | cap for variable-length path expansion |
 | `-query-timeout` | — | `30s` | per-query execution timeout |
 | `-body-limit` | — | `10M` | maximum request body size |
+| `-read-only` | `GRAPHDB_READ_ONLY` | `false` | refuse all mutations; open the database read-only |
 
 Config file (config/graphdb.example.json):
 
@@ -78,7 +79,7 @@ Config file (config/graphdb.example.json):
   "dbPath": "graphdb.db",
   "authToken": "",
   "maxVarLenDepth": 15,
-  "writeBehind": false,
+  "readOnly": false,
   "queryTimeout": "30s",
   "bodyLimit": "10M"
 }
@@ -650,6 +651,67 @@ Notes:
   the server's in-memory copy won't see the new rows until it restarts.
 - `--dry-run` is the fast way to find files that use unsupported features (e.g.
   list-valued properties) before committing to a load.
+
+---
+
+## Read-only mode
+
+`-read-only` refuses every mutation and opens the database read-only — useful for
+serving a published dataset, or any instance that must not change under it.
+
+```bash
+graphdb -db plant.db -read-only
+```
+
+Write statements, `POST /nodes`, `POST /edges` and `POST /indexes` all return
+**403** with `Neo.ClientError.Statement.AccessMode`. That is a client error, not
+a server one: retrying will be refused identically. Reads are unaffected.
+
+Check before you try, rather than provoking a refusal:
+
+```bash
+curl -s localhost:8080/ | jq '{readOnly, canWrite: (.features | index("read-only-mode") | not)}'
+```
+
+Two things to know:
+
+- **It is a snapshot, not a replica.** The graph is read into memory at boot and
+  never re-read, so writes another process makes to the same database stay
+  invisible until this one restarts — silently. A writer plus a read-only reader
+  on one file does not give you a follower.
+- **The database must already exist**, and its *directory* must be writable even
+  though the data is not: SQLite creates the `-shm`/`-wal` sidecar files to read a
+  WAL database. On genuinely read-only media the server will not start.
+
+Index declaration is refused too. It looks like a tuning hint, but it persists to
+the database, so it is a write like any other.
+
+### Per-request access mode
+
+A single request can declare that it must not mutate, which is the shape a driver
+`executeRead`-style call maps onto:
+
+```bash
+curl -s -XPOST localhost:8080/cypher -H 'X-Graphdb-Access-Mode: read' \
+  -d '{"query":"CREATE (:Oops)"}'
+# 403 Neo.ClientError.Statement.AccessMode
+```
+
+Set it once on an HTTP client session and every request through that session is
+guarded. Reads are unaffected; omitting the header, or sending `write`, behaves
+exactly as before.
+
+This is a **guard-rail, not a permission**: it catches your own code writing down
+a read path, and does nothing about a caller that omits the header. Use
+`-read-only` to refuse writes from everyone.
+
+Two details that make it trustworthy. An unrecognised value is a **400** rather
+than being treated as unset, so a typo cannot silently leave you unguarded. And
+an older server ignores the header entirely, so check before relying on it:
+
+```bash
+curl -s localhost:8080/ | jq '.features | index("access-mode") != null'
+```
 
 ---
 
