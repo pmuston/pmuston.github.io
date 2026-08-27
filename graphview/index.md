@@ -4,10 +4,10 @@ title: graphview
 
 [← all tools](../)
 
-A **web-based graph viewer for Neo4j**. Write Cypher, get a WebGL graph you can
-pan, zoom and filter — plus table, tree and raw JSON views of the same result. A
-single binary with the frontend embedded, so it runs on an isolated network with
-no build step and no internet access.
+A **web-based graph viewer for Neo4j and [graphdb](../graphdb/)**. Write Cypher,
+get a WebGL graph you can pan, zoom and filter — plus table, tree and raw JSON
+views of the same result. A single binary with the frontend embedded, so it runs
+on an isolated network with no build step and no internet access.
 
 ## Install
 
@@ -40,18 +40,24 @@ graphview [flags]     # start the server
 graphview version     # print version and build revision
 ```
 
-Point a browser at <http://127.0.0.1:8080>. A Neo4j password is required — from
-`graphview.yaml`, `NEO4J_PASSWORD`, or `--neo4j-pass` — and the binary exits at
-startup without one.
+Point a browser at <http://127.0.0.1:8080>.
+
+**The connection URI's scheme picks the database.** `bolt://` and `neo4j://`
+(with their `+s` / `+ssc` variants) talk to Neo4j and need a password, from
+`graphview.yaml`, `NEO4J_PASSWORD` or `--neo4j-pass`; the binary exits at startup
+without one. `http://` and `https://` talk to [graphdb](../graphdb/) and need
+nothing unless the server was started with a token. There is no separate backend
+setting.
 
 | Flag | Meaning |
 |---|---|
 | `--addr HOST:PORT` | Bind address. Default `127.0.0.1:8080` |
 | `--config FILE` | Config file, instead of searching the default locations |
-| `--neo4j-uri URI` | Bolt URI. Default `bolt://localhost:7687` |
-| `--neo4j-user NAME` | Username. Default `neo4j` |
-| `--neo4j-pass PASSWORD` | Password. Better set via config or environment |
-| `--neo4j-db NAME` | Database. Default `neo4j` |
+| `--neo4j-uri URI` | Database URI; the scheme selects the backend. Default `bolt://localhost:7687` |
+| `--neo4j-user NAME` | Neo4j username. Default `neo4j` |
+| `--neo4j-pass PASSWORD` | Neo4j password. Better set via config or environment |
+| `--neo4j-token TOKEN` | graphdb bearer token. Optional |
+| `--neo4j-db NAME` | Neo4j database. Default `neo4j` |
 | `--max-nodes N` | Node ceiling per result. Default `50000` |
 | `--max-edges N` | Edge ceiling per result. Default `200000` |
 | `--max-rows N` | Record ceiling for table/raw. Default `50000` |
@@ -65,8 +71,11 @@ Flags take two dashes — `-addr` will not parse.
 ## Examples
 
 ```sh
-# local database, password from the environment
+# local Neo4j, password from the environment
 NEO4J_PASSWORD=secret graphview
+
+# local graphdb — the scheme is what selects the backend
+graphview --neo4j-uri http://localhost:8080
 
 # another port, with the saved-queries library on
 graphview --addr 127.0.0.1:9000 --library-enabled --library-dir ~/queries
@@ -117,12 +126,19 @@ Anyone who can reach the port can read the whole database. It binds loopback by
 default — keep it there and put a reverse proxy in front for TLS and auth. Every
 release ships a `deploy/` directory with a working Caddy example.
 
-It does not inspect Cypher to reject writes, which is unreliable. Instead every
-query runs inside a Neo4j read transaction, so the database itself refuses
-writes. A read-only database user is the intended second fence — but **Neo4j
-Community Edition cannot provide one**, having no role-based access control, so
-there every user is full-access and the read transaction is the only fence. The
-shipped `deploy/README.md` covers what to do instead.
+It does not inspect Cypher to reject writes, which is unreliable. What refuses a
+write depends on the database:
+
+| Backend | What refuses a write | Fences |
+|---|---|---|
+| Neo4j Enterprise | A read transaction, plus a read-only DB user | 2 |
+| Neo4j Community | A read transaction only — no RBAC exists | 1 |
+| graphdb 0.30.0+ | The `X-Graphdb-Access-Mode: read` header graphview always sends | 1 |
+
+Only the first is layered. Against graphdb the header cannot be disabled, and
+graphview refuses to start against a server older than 0.30.0 — such a server
+ignores the header and runs the write, which would look identical to a working
+install. The shipped `deploy/README.md` covers all three cases.
 
 Query logging records parameter *keys* only, never values.
 
