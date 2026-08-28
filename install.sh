@@ -11,6 +11,7 @@
 #   VERSION   pin a version, e.g. v0.1.2   (default: latest release)
 #   BIN_DIR   where the binary goes        (default: ~/.local/bin)
 #   MAN_DIR   where the man page goes       (default: <BIN_DIR>/../share/man/man1)
+#   SHARE_DIR where bundled extras go      (default: <BIN_DIR>/../share/<tool>)
 #   OWNER     GitHub owner                  (default: pmuston, or manifest)
 #   REPO      release repo                  (default: looked up in the manifest)
 set -eu
@@ -107,6 +108,24 @@ if [ -f "$dir/$TOOL.1" ]; then
   cp "$dir/$TOOL.1" "$MAN_DIR/$TOOL.1"
   echo "Installed man page -> $MAN_DIR/$TOOL.1" >&2
 fi
+
+# Anything else the archive carries — config templates, deployment samples,
+# third-party notices — goes beside the binary in a share dir. Without this the
+# extras are extracted to a temp dir and deleted, and a man page that tells the
+# user to read them is pointing at nothing.
+SHARE_DIR="${SHARE_DIR:-${BIN_DIR%/bin}/share/$TOOL}"
+copied=""
+for extra in "$dir"/*; do
+  name="$(basename "$extra")"
+  case "$name" in
+    "$TOOL"|"$TOOL.1") continue ;;              # already installed above
+  esac
+  mkdir -p "$SHARE_DIR"
+  rm -rf "$SHARE_DIR/$name"
+  cp -R "$extra" "$SHARE_DIR/$name"
+  copied="$copied $name"
+done
+[ -n "$copied" ] && echo "Installed$copied -> $SHARE_DIR/" >&2
 
 # man-db derives its search path from PATH ($dir/bin -> $dir/share/man), so a
 # BIN_DIR on PATH makes `man $TOOL` work with no extra config.
