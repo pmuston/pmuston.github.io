@@ -45,7 +45,7 @@ curl -fsSL https://pmuston.github.io/install.sh | sh -s minillm
 
 Installs `ask` and `llmbatch` to `~/.local/bin` and the example templates to
 `~/.local/share/minillm/` — no root. Re-run to upgrade; pin with
-`VERSION=v0.1.0`.
+`VERSION=v0.1.1`.
 
 ## Guides
 

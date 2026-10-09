@@ -137,6 +137,7 @@ The API key travels over plain HTTP. That's fine on your home network or over Ta
 | Log says `no API key` or `vllm-mlx not found` | `setup` hasn't been run | `minillm-server setup`, then restart |
 | `test` fails just after a start | The model is still loading or downloading | Wait for `ready after …s` in the log |
 | Connection refused from another machine | `HOST` is `127.0.0.1`, or the macOS firewall prompt was declined | Set `HOST=0.0.0.0`; allow the process in System Settings → Network → Firewall |
+| 404 Not Found from a client | The client's `LLM_URL` doesn't end in `/v1` | Use `http://<host>:8000/v1` |
 | 401 Unauthorized | The client's `LLM_KEY` doesn't match | Copy `minillm-server key` again; watch for a trailing newline |
 | 422 Unprocessable Entity | The request has no `"model"` field, or the model name is wrong | Set `LLM_MODEL` to the config's `MODEL` |
 | `health check failed` lines, then a restart | Generation stopped responding | The watchdog has already restarted it. If it happens often, lower `MAX_SEQS` |

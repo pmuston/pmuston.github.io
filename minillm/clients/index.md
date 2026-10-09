@@ -29,7 +29,7 @@ brew install minillm
 curl -fsSL https://pmuston.github.io/install.sh | sh -s minillm
 ```
 
-The script installs `ask` and `llmbatch` to `~/.local/bin` and the example templates to `~/.local/share/minillm/templates`, with no root needed. Run it again to upgrade. Use `VERSION=v0.1.0` to pin a version, or `BIN_DIR=/usr/local/bin` to install somewhere else.
+The script installs `ask` and `llmbatch` to `~/.local/bin` and the example templates to `~/.local/share/minillm/templates`, with no root needed. Run it again to upgrade. Use `VERSION=v0.1.1` to pin a version, or `BIN_DIR=/usr/local/bin` to install somewhere else.
 
 Check the install with `ask -version` and `llmbatch -version`.
 
@@ -175,6 +175,7 @@ print(r.choices[0].message.content)
 | Symptom | Fix |
 | --- | --- |
 | Connection refused | Check `LLM_URL`, and that `minillm-server status` on the server reports OK |
+| 404 Not Found | `LLM_URL` must end in `/v1`, e.g. `http://macmini.local:8000/v1`. The tools print this hint when it's missing |
 | 401 Unauthorized | `LLM_KEY` doesn't match the server's key |
 | 422 Unprocessable Entity | `LLM_MODEL` doesn't match the server's model. Unset it to let the tools discover it |
 | "empty answer" for long inputs run together | Lower `-j`, or lower `MAX_SEQS` on the server |
