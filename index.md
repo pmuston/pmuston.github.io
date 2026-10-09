@@ -195,6 +195,27 @@ Drivers: [Go](https://github.com/pmuston/jsondb-go) ·
 
 ---
 
+## minillm
+
+A Mac mini as a **private LLM server** for the network: vllm-mlx as a Homebrew
+service with a built-in watchdog (`minillm-server`), plus two dependency-free
+clients (`minillm`): `ask` for one prompt and `llmbatch` for a template run
+over many documents, JSON Lines out.
+
+```sh
+brew tap pmuston/minillm
+brew trust pmuston/minillm
+brew install minillm            # clients, any machine
+brew install minillm-server     # the server, Apple Silicon only
+```
+
+[Documentation →](minillm/) &nbsp;·&nbsp;
+[Server guide →](minillm/server/) &nbsp;·&nbsp;
+[Client guide →](minillm/clients/) &nbsp;·&nbsp;
+[Source & releases](https://github.com/pmuston/homebrew-minillm)
+
+---
+
 ## rednote
 
 A **Redis notebook** in your browser. One Markdown file is one notebook; a

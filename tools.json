@@ -11,6 +11,10 @@
     "owner": "pmuston",
     "repo": "homebrew-graphview"
   },
+  "minillm": {
+    "owner": "pmuston",
+    "repo": "homebrew-minillm"
+  },
   "reshape-cli": {
     "owner": "pmuston",
     "repo": "homebrew-reshape"

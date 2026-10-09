@@ -93,21 +93,34 @@ fi
 
 tar -xzf "$tmp/$asset" -C "$tmp"
 dir="$tmp/${asset%.tar.gz}"
-[ -f "$dir/$TOOL" ] || { echo "error: '$TOOL' not found inside $asset" >&2; exit 1; }
+# Usually the archive holds one binary named after the tool. A tool that ships
+# several (minillm: ask + llmbatch) has no file of that name instead, and every
+# executable at the top of the archive is a binary.
+if [ -f "$dir/$TOOL" ]; then
+  bins="$TOOL"
+else
+  bins=""
+  for f in "$dir"/*; do
+    [ -f "$f" ] && [ -x "$f" ] && bins="$bins $(basename "$f")"
+  done
+  [ -n "$bins" ] || { echo "error: no '$TOOL' binary inside $asset" >&2; exit 1; }
+fi
 
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 MAN_DIR="${MAN_DIR:-${BIN_DIR%/bin}/share/man/man1}"
 
 mkdir -p "$BIN_DIR"
-if have install; then install -m 0755 "$dir/$TOOL" "$BIN_DIR/$TOOL"
-else cp "$dir/$TOOL" "$BIN_DIR/$TOOL" && chmod 0755 "$BIN_DIR/$TOOL"; fi
-echo "Installed $TOOL $VERSION -> $BIN_DIR/$TOOL" >&2
+for b in $bins; do
+  if have install; then install -m 0755 "$dir/$b" "$BIN_DIR/$b"
+  else cp "$dir/$b" "$BIN_DIR/$b" && chmod 0755 "$BIN_DIR/$b"; fi
+  echo "Installed $b $VERSION -> $BIN_DIR/$b" >&2
 
-if [ -f "$dir/$TOOL.1" ]; then
-  mkdir -p "$MAN_DIR"
-  cp "$dir/$TOOL.1" "$MAN_DIR/$TOOL.1"
-  echo "Installed man page -> $MAN_DIR/$TOOL.1" >&2
-fi
+  if [ -f "$dir/$b.1" ]; then
+    mkdir -p "$MAN_DIR"
+    cp "$dir/$b.1" "$MAN_DIR/$b.1"
+    echo "Installed man page -> $MAN_DIR/$b.1" >&2
+  fi
+done
 
 # Anything else the archive carries — config templates, deployment samples,
 # third-party notices — goes beside the binary in a share dir. Without this the
@@ -117,9 +130,8 @@ SHARE_DIR="${SHARE_DIR:-${BIN_DIR%/bin}/share/$TOOL}"
 copied=""
 for extra in "$dir"/*; do
   name="$(basename "$extra")"
-  case "$name" in
-    "$TOOL"|"$TOOL.1") continue ;;              # already installed above
-  esac
+  case " $bins " in *" $name "*) continue ;; esac      # already installed above
+  case "$name" in *.1) [ -f "$dir/${name%.1}" ] && continue ;; esac
   mkdir -p "$SHARE_DIR"
   rm -rf "$SHARE_DIR/$name"
   cp -R "$extra" "$SHARE_DIR/$name"
