@@ -6,12 +6,13 @@ title: "minillm clients: getting started"
 
 # minillm clients: getting started
 
-Two small command-line tools for a private LLM server, such as one set up with [minillm-server](../server/) or any other OpenAI-compatible endpoint:
+Three small command-line tools for a private LLM server, such as one set up with [minillm-server](../server/) or any other OpenAI-compatible endpoint:
 
 - **`ask`**: one prompt in, one answer out. It streams, reads piped input, and can return checked JSON.
 - **`llmbatch`**: one prompt template run over many documents, a few at a time, with JSON Lines out. An interrupted run can be resumed.
+- **`agent`**: a small assistant that reads, searches and edits files in one directory, runs commands with your approval, and remembers things between sessions.
 
-Both are single static binaries with no dependencies. They read stdin, write stdout and exit non-zero on failure, so they work with `jq`, `pdftotext`, `git` and shell scripts.
+All three are single static binaries with no dependencies. They read stdin, write stdout and exit non-zero on failure, so they work with `jq`, `pdftotext`, `git` and shell scripts.
 
 ## Install
 
@@ -29,9 +30,9 @@ brew install minillm
 curl -fsSL https://pmuston.github.io/install.sh | sh -s minillm
 ```
 
-The script installs `ask` and `llmbatch` to `~/.local/bin` and the example templates to `~/.local/share/minillm/templates`, with no root needed. Run it again to upgrade. Use `VERSION=v0.1.1` to pin a version, or `BIN_DIR=/usr/local/bin` to install somewhere else.
+The script installs `ask`, `llmbatch` and `agent` to `~/.local/bin` and the example templates to `~/.local/share/minillm/templates`, with no root needed. Run it again to upgrade. Use `VERSION=v0.1.2` to pin a version, or `BIN_DIR=/usr/local/bin` to install somewhere else.
 
-Check the install with `ask -version` and `llmbatch -version`.
+Check the install with `ask -version`, `llmbatch -version` and `agent -version`.
 
 ## Connect to the server
 
@@ -153,6 +154,41 @@ Long prompts running together compete for the server's memory. Use `-j 1` for lo
 
 The server generates up to `MAX_SEQS` requests together (4 by default). More at once raises total throughput, but each answer comes back more slowly. Run the same set of documents with `-j 1`, `-j 2` and `-j 4`, compare the final tok/s figures, and use the smallest `-j` beyond which the figure stops rising. Keeping `-j` at or below `MAX_SEQS` avoids requests just queuing on the server.
 
+## `agent`: a tool-using assistant
+
+`agent` works in one directory. It can read, list, search, write and edit files there, run commands, and remember facts between sessions.
+
+```bash
+cd ~/src/myproject
+agent                                  # interactive; /help lists the commands
+agent "why does go vet fail here?"     # one question, then exit
+git diff | agent "review this change"  # stdin is appended to the question
+agent -resume                          # continue the last session in this directory
+```
+
+**Approvals.** Writing or editing a file, and running a command, ask first. Answer `y`, `n`, `a` (allow that tool for the rest of the session), or type what it should do instead. Read-only and build/test commands such as `git status`, `go build` or `go test` run without asking, as long as they don't use shell operators or paths outside the directory. `-yes` approves everything. Without a terminal to ask on, unapproved actions are refused. The tools can't reach files outside the working directory (`-dir`, which defaults to the current one).
+
+**Memory.** Two plain Markdown files go into every conversation:
+
+- `~/.config/agent/memory.md`: facts about you, used everywhere.
+- `.agent/memory.md` in the project: facts about this project.
+
+The model adds to them with its `remember` tool when it learns something lasting, and you can ask it to remember or forget things. `/memory` shows both, and you can edit them by hand.
+
+**Sessions** are saved after every step under `~/.config/agent/sessions/`. Long conversations are summarised automatically once they pass `-budget` tokens (24,000), because every token is resent on each step and long prompts are slow to process. `/compact` summarises on demand.
+
+| Flag | Default | What it does |
+| --- | --- | --- |
+| `-dir` | `.` | The directory the tools work in |
+| `-resume` | off | Continue the last session in this directory |
+| `-yes` | off | Approve every change and command |
+| `-think` | off | Let the model reason first; `/think` switches it during a session |
+| `-steps` | 10 | Maximum tool rounds for one question |
+| `-budget` | 24000 | Context size in tokens at which earlier turns are summarised |
+| `-v` | off | Print token counts and timing for each step |
+
+`agent` needs the server's tool-call parser (`TOOL_PARSER`, on by default from minillm-server 0.1.2). With an older server it still works, but each tool step can take two requests.
+
 ## From your own code
 
 The server speaks the standard OpenAI API, so most libraries work once you change the base URL and key. For example, with Python's `openai` package:
@@ -180,4 +216,5 @@ print(r.choices[0].message.content)
 | 422 Unprocessable Entity | `LLM_MODEL` doesn't match the server's model. Unset it to let the tools discover it |
 | "empty answer" for long inputs run together | Lower `-j`, or lower `MAX_SEQS` on the server |
 | `finish_reason: length` on thinking answers | The reasoning used the whole budget. Raise `-max`, or leave thinking off |
+| `agent` keeps printing "asking again without streaming" | The server has no tool-call parser. Upgrade minillm-server to 0.1.2 or later and restart it |
 | `command not found` after the curl install | Add `~/.local/bin` to your PATH, as the installer suggests |

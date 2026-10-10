@@ -198,9 +198,9 @@ Drivers: [Go](https://github.com/pmuston/jsondb-go) ·
 ## minillm
 
 A Mac mini as a **private LLM server** for the network: vllm-mlx as a Homebrew
-service with a built-in watchdog (`minillm-server`), plus two dependency-free
-clients (`minillm`): `ask` for one prompt and `llmbatch` for a template run
-over many documents, JSON Lines out.
+service with a built-in watchdog (`minillm-server`), plus three dependency-free
+clients (`minillm`): `ask` for one prompt, `llmbatch` for a template run over
+many documents, and `agent`, a tool-using assistant with memory.
 
 ```sh
 brew tap pmuston/minillm

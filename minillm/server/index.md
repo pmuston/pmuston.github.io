@@ -106,6 +106,7 @@ The settings file is at `$(brew --prefix)/etc/minillm/config`; `minillm-server c
 | `MAX_TOKENS` | `16384` | Server-wide cap on one answer, thinking included |
 | `TIMEOUT` | `900` | Seconds before a request is abandoned. Long thinking runs need the headroom |
 | `REASONING` | `qwen3` | Moves `<think>` text into a separate `reasoning` field. Leave it empty for non-Qwen models |
+| `TOOL_PARSER` | `qwen3_xml` | The model's tool-call format, needed for tool-using clients such as `agent`. Without it, multi-step tool use breaks down. Leave it empty for models that don't use Qwen's XML tool format |
 | `WATCHDOG_INTERVAL` | `300` | Seconds between health checks once the model is up |
 | `WATCHDOG_FAILS` | `2` | Failed checks in a row before a restart |
 | `VLLM_MLX_VERSION` | the tested release | Pins a different vllm-mlx. Run `minillm-server setup` after changing it |

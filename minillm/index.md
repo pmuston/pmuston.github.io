@@ -12,7 +12,7 @@ clients are single static binaries with no dependencies.
 | Formula | Install it on | What you get |
 | --- | --- | --- |
 | `minillm-server` | the Apple Silicon Mac | vllm-mlx as a Homebrew service, with a built-in watchdog, and a `minillm-server` setup/status command |
-| `minillm` | every client machine | `ask` (one prompt, streamed) and `llmbatch` (a template over many documents, JSON Lines out, resumable) |
+| `minillm` | every client machine | `ask` (one prompt, streamed), `llmbatch` (a template over many documents, JSON Lines out, resumable) and `agent` (reads, searches and edits files and runs commands with your approval, with memory between sessions) |
 
 ## Install
 
@@ -43,11 +43,11 @@ brew install minillm
 curl -fsSL https://pmuston.github.io/install.sh | sh -s minillm
 ```
 
-Installs `ask` and `llmbatch` to `~/.local/bin` and the example templates to
+Installs `ask`, `llmbatch` and `agent` to `~/.local/bin` and the example templates to
 `~/.local/share/minillm/` — no root. Re-run to upgrade; pin with
-`VERSION=v0.1.1`.
+`VERSION=v0.1.2`.
 
 ## Guides
 
 - [Server: getting started](server/) — prerequisites, install, settings, day to day, troubleshooting
-- [Clients: getting started](clients/) — install, connecting, `ask`, `llmbatch`, your own code
+- [Clients: getting started](clients/) — install, connecting, `ask`, `llmbatch`, `agent`, your own code
