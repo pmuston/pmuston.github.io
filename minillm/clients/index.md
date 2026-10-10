@@ -152,7 +152,7 @@ Long prompts running together compete for the server's memory. Use `-j 1` for lo
 
 ### 7. How many at once
 
-The server generates up to `MAX_SEQS` requests together (4 by default). More at once raises total throughput, but each answer comes back more slowly. Run the same set of documents with `-j 1`, `-j 2` and `-j 4`, compare the final tok/s figures, and use the smallest `-j` beyond which the figure stops rising. Keeping `-j` at or below `MAX_SEQS` avoids requests just queuing on the server.
+The server generates up to `MAX_SEQS` requests together (4 by default). If it has been switched to `ENGINE=simple`, it handles one request at a time and any `-j` above 1 just queues. More at once raises total throughput, but each answer comes back more slowly. Run the same set of documents with `-j 1`, `-j 2` and `-j 4`, compare the final tok/s figures, and use the smallest `-j` beyond which the figure stops rising. Keeping `-j` at or below `MAX_SEQS` avoids requests just queuing on the server.
 
 ## `agent`: a tool-using assistant
 

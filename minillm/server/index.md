@@ -102,7 +102,8 @@ The settings file is at `$(brew --prefix)/etc/minillm/config`; `minillm-server c
 | `MODEL` | `mlx-community/Qwen3.6-35B-A3B-4bit` | The one model served. This MoE model runs at about 60 tok/s on a 32 GB M6 mini. `mlx-community/Qwen3.8-27B-4bit` is more accurate, but runs at about 9 tok/s |
 | `HOST` | `0.0.0.0` | Listen on every interface. Use `127.0.0.1` to allow only local calls |
 | `PORT` | `8000` | The port clients connect to |
-| `MAX_SEQS` | `4` | Requests generated together. More raises total throughput, but each request gets slower and needs more memory for context |
+| `ENGINE` | `batched` | How requests are run: `batched` (several at once) or `simple` (one at a time). See [Batched or simple](#batched-or-simple) |
+| `MAX_SEQS` | `4` | Batched engine only: requests generated together. More raises total throughput, but each request gets slower and needs more memory for context |
 | `MAX_TOKENS` | `16384` | Server-wide cap on one answer, thinking included |
 | `TIMEOUT` | `900` | Seconds before a request is abandoned. Long thinking runs need the headroom |
 | `REASONING` | `qwen3` | Moves `<think>` text into a separate `reasoning` field. Leave it empty for non-Qwen models |
@@ -113,12 +114,36 @@ The settings file is at `$(brew --prefix)/etc/minillm/config`; `minillm-server c
 
 To change the API key, replace the contents of `api-key` and restart the service. Every client then needs the new key.
 
+## Batched or simple
+
+`ENGINE` decides how vllm-mlx runs requests, and with that, which earlier work it can reuse. Processing a prompt runs at about 1,300 tokens a second, so reuse is what makes a reply start in a fraction of a second instead of several seconds.
+
+| | `batched` (default) | `simple` |
+| --- | --- | --- |
+| Requests | Several at once (up to `MAX_SEQS`) | One at a time; others wait their turn |
+| Reuses | The conversation so far, within one agent turn (tool step to tool step) | The system prompt |
+| Fast at | Long `agent` tool loops; `llmbatch -j 2` and up | Chat with a long system prompt or reference text; `ask` with the same instructions each time |
+| Slow at | A new question re-reads the system prompt | Each agent tool step re-reads the conversation; `llmbatch -j` gains nothing |
+
+Measured on a 32 GB M6 mini (time to first token):
+
+| Request | `batched` | `simple` |
+| --- | --- | --- |
+| New question, same 2,900-token system prompt | 2.0 s | 0.2 s |
+| Agent tool step adding a short result after a 9,200-token conversation | 0.2 s | 5.9 s |
+| Next user message in that 9,300-token conversation | 6.6 s | 6.0 s |
+
+A new user message in a long conversation re-reads the whole conversation with either engine: the default model is a hybrid design whose saved state can only be reused when the new prompt continues the old one exactly.
+
+To see the difference on your own server, run `minillm-server cache-test`. It times a few typical follow-up requests and says what to look for. Switch with `ENGINE=batched` (or `simple`) in the config and `brew services restart minillm-server`.
+
 ## Day to day
 
 | To | Run |
 | --- | --- |
 | Follow the log, including watchdog restarts | `minillm-server logs` |
 | Check health | `minillm-server status` |
+| See how fast follow-ups start | `minillm-server cache-test` |
 | Restart | `brew services restart minillm-server` |
 | Stop it (frees the memory) | `brew services stop minillm-server` |
 | Change model | edit `MODEL` in the config, then restart. The first start downloads the new model |
@@ -142,6 +167,8 @@ The API key travels over plain HTTP. That's fine on your home network or over Ta
 | 401 Unauthorized | The client's `LLM_KEY` doesn't match | Copy `minillm-server key` again; watch for a trailing newline |
 | 422 Unprocessable Entity | The request has no `"model"` field, or the model name is wrong | Set `LLM_MODEL` to the config's `MODEL` |
 | `health check failed` lines, then a restart | Generation stopped responding | The watchdog has already restarted it. If it happens often, lower `MAX_SEQS` |
+| `health check failed (busy, nothing finished for …)` | One request has run longer than `TIMEOUT` plus 5 minutes | The watchdog treats a busy server as healthy until then. Raise `TIMEOUT` for very long thinking answers |
+| `llmbatch -j 3` is no faster than `-j 1` | `ENGINE=simple` runs one request at a time | Use `ENGINE=batched` for big batch jobs |
 | Model fails to load at start | vllm-mlx doesn't support that model's architecture | Try the `lmstudio-community` MLX build, or a text-only model |
 | Metal out-of-memory errors | Too many long requests at once | Lower `MAX_SEQS`, or use `-j 1` / a lower `-maxchars` on the client |
 | Slower than expected | The wired limit reset at reboot, or something else is using the GPU | Check `sysctl iogpu.wired_limit_mb`; stop Ollama and LM Studio |
