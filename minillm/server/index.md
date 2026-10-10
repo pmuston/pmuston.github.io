@@ -122,7 +122,7 @@ To change the API key, replace the contents of `api-key` and restart the service
 | Restart | `brew services restart minillm-server` |
 | Stop it (frees the memory) | `brew services stop minillm-server` |
 | Change model | edit `MODEL` in the config, then restart. The first start downloads the new model |
-| Upgrade minillm | `brew upgrade minillm-server && minillm-server setup && brew services restart minillm-server` |
+| Upgrade minillm | `brew update && brew upgrade minillm-server && minillm-server setup && brew services restart minillm-server`. Run `brew update` first: without it Homebrew may not have seen a release from the last day |
 | Check memory | `memory_pressure`, and `sysctl iogpu.wired_limit_mb` (should be 26000) |
 
 `setup` after an upgrade is how a new pinned vllm-mlx version gets installed. If the pin hasn't changed, `setup` does nothing.
