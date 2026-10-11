@@ -156,7 +156,9 @@ The server generates up to `MAX_SEQS` requests together (4 by default). If it ha
 
 ## `agent`: a tool-using assistant
 
-`agent` works in one directory. It can read, list, search, write and edit files there, run commands, and remember facts between sessions.
+`agent` works in one directory. It can read, list, search, write and edit files there, run commands, and remember facts between sessions. It reads PDF, Word (`.docx`, `.doc`), RTF and OpenDocument files as well as plain text; PDFs need `pdftotext` (`brew install poppler`, or `poppler-utils` on Linux), and on Linux Word files need `pandoc`.
+
+At the start of each request the agent sees a listing of the folder (two levels deep, up to 60 entries), so it knows which files a request might be about, and it is told to read them before acting.
 
 ```bash
 cd ~/src/myproject
