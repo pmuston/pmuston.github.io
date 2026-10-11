@@ -166,7 +166,13 @@ git diff | agent "review this change"  # stdin is appended to the question
 agent -resume                          # continue the last session in this directory
 ```
 
-**Approvals.** Writing or editing a file, and running a command, ask first. Answer `y`, `n`, `a` (allow that tool for the rest of the session), or type what it should do instead. Read-only and build/test commands such as `git status`, `go build` or `go test` run without asking, as long as they don't use shell operators or paths outside the directory. `-yes` approves everything. Without a terminal to ask on, unapproved actions are refused. The tools can't reach files outside the working directory (`-dir`, which defaults to the current one).
+**Approvals.** Writing or editing a file, and running a command, ask first. Answer `y`, `n`, `a` (allow that tool for the rest of the session), or type what it should do instead. Read-only and build/test commands such as `git status`, `go build` or `go test` run without asking, as long as they don't use shell operators or paths outside the directory. The tools can't reach files outside the working directory (`-dir`, which defaults to the current one).
+
+**Risky commands** (ones that delete, move or overwrite files, edit in place, use `sudo`, reach the internet, or touch paths outside the folder) show a warning and run only if you type `yes` in full; `y` and `a` don't count. Without a terminal to ask on, they are refused.
+
+**Undo.** Before any change, the agent keeps a copy: the file before `write_file` or `edit_file` touches it, and the whole folder (up to 200 MB) before a risky command. `/undo` puts back the most recent change, and typing it again goes further back; `/changes` lists what can be undone. The copies are in `.agent/undo/` inside the folder; the last 20 are kept.
+
+**Exact arithmetic.** A `calc` tool works out sums, quantities, percentages and dates, and `csv_totals` adds up CSV columns, so figures don't depend on the model doing maths in its head. Neither needs approval.
 
 **Memory.** Two plain Markdown files go into every conversation:
 
@@ -181,7 +187,8 @@ The model adds to them with its `remember` tool when it learns something lasting
 | --- | --- | --- |
 | `-dir` | `.` | The directory the tools work in |
 | `-resume` | off | Continue the last session in this directory |
-| `-yes` | off | Approve every change and command |
+| `-yes-safe` | off | Approve file changes (they can be undone) and ordinary commands; risky commands still ask |
+| `-yes` | off | Approve everything, risky commands included |
 | `-think` | off | Let the model reason first; `/think` switches it during a session |
 | `-steps` | 10 | Maximum tool rounds for one question |
 | `-budget` | 24000 | Context size in tokens at which earlier turns are summarised |
